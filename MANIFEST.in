@@ -1,3 +1,2 @@
-recursive-include django_filehub/templates *
-recursive-include django_filehub/static *
-recursive-include django_filehub/migrations *
+recursive-include filehub/templates *
+recursive-include filehub/static *
