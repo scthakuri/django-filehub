@@ -2,6 +2,8 @@ import os
 from django.conf import settings
 
 
+FILEHUB_LOGIN_URL = getattr(settings, 'FILEHUB_LOGIN_URL', '/admin/')
+
 DIRECTORY = getattr(settings, 'FILEMANAGER_DIRECTORY', 'uploads')
 
 MEDIA_ROOT = getattr(settings, "FILEMANAGER_MEDIA_ROOT", os.path.join(settings.MEDIA_ROOT, DIRECTORY))

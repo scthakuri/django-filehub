@@ -7,6 +7,7 @@ from filehub.settings import MEDIA_URL, FILES_SORTING, FILES_SORTING_ORDER, FILE
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
+from filehub.settings import FILEHUB_LOGIN_URL
 
 
 def get_folder_hierarchy(parent_folder=None):
@@ -94,23 +95,8 @@ def get_files(page=1, folder=None, sortby="name", sortorder="asc", search=None, 
     }
 
 
-@login_required(login_url="/user/login/")
-def BrowserView(request):
-    context = {
-        "media_url": MEDIA_URL,
-        "sorting": {
-            "order": FILES_SORTING_ORDER,
-            "sort": FILES_SORTING
-        },
-        "allowed_exts": FILE_TYPE_CATEGORIES,
-        "select_files": "false",
-        "select_multiple": "false"
-    }
-    return render(request, "filehub/filehub_list.html", context=context)
-
-
-@login_required(login_url="/user/login/")
-def BrowserSelect(request):
+@login_required(login_url=FILEHUB_LOGIN_URL)
+def browser_view(request):
     context = {
         "media_url": MEDIA_URL,
         "sorting": {
@@ -119,14 +105,31 @@ def BrowserSelect(request):
         },
         "allowed_exts": FILE_TYPE_CATEGORIES,
         "select_files": "true",
-        "select_multiple": request.GET.get("multiple", "false")
+        "select_multiple": "true",
+        "file_picker": False
     }
     return render(request, "filehub/filehub_list.html", context=context)
 
 
-@login_required(login_url="/user/login/")
+@login_required(login_url=FILEHUB_LOGIN_URL)
+def browser_select(request):
+    context = {
+        "media_url": MEDIA_URL,
+        "sorting": {
+            "order": FILES_SORTING_ORDER,
+            "sort": FILES_SORTING
+        },
+        "allowed_exts": FILE_TYPE_CATEGORIES,
+        "select_files": "true",
+        "select_multiple": request.GET.get("multiple", "false"),
+        "file_picker": True
+    }
+    return render(request, "filehub/filehub_list.html", context=context)
+
+
+@login_required(login_url=FILEHUB_LOGIN_URL)
 @csrf_exempt
-def BrowserAjax(request):
+def browser_ajax(request):
     if request.method == 'POST':
         try:
             folder_id = request.POST.get("folder", None)
@@ -175,9 +178,9 @@ def BrowserAjax(request):
     return JsonResponse({'message': 'This request is not available'}, status=500)
 
 
-@login_required(login_url="/user/login/")
+@login_required(login_url=FILEHUB_LOGIN_URL)
 @csrf_exempt
-def NewFolder(request):
+def new_folder(request):
     if request.method == 'POST':
         try:
             update_id = request.POST.get("update_id", None)
@@ -203,9 +206,9 @@ def NewFolder(request):
                 except Exception:
                     current_dir = None
 
-                new_folder = MediaFolder(folder_name=name, parent=current_dir, upload_by=request.user)
-                FolderManager.create_folder(new_folder)
-                new_folder.save()
+                new_folder_obj = MediaFolder(folder_name=name, parent=current_dir, upload_by=request.user)
+                FolderManager.create_folder(new_folder_obj)
+                new_folder_obj.save()
                 return JsonResponse({'message': 'New folder created successfully.'})
 
         except Exception as e:
@@ -214,43 +217,46 @@ def NewFolder(request):
     return JsonResponse({'message': 'This request is not available'}, status=500)
 
 
-@login_required(login_url="/user/login/")
+@login_required(login_url=FILEHUB_LOGIN_URL)
 @csrf_exempt
-def DeleteFolder(request):
+def delete_folder(request):
     if request.method == 'POST':
         try:
-            delete_id = request.POST.get("delete_id", None)
-            delete_id = delete_id if delete_id else None
+            delete_id = request.POST.getlist("delete_id[]", [])
+            if not delete_id:
+                return JsonResponse({'message': 'No Files/Folder selected to delete'}, status=400)
 
             file_type = request.POST.get("type", None)
             file_type = file_type if file_type else "folder"
 
             if file_type == "folder":
-                try:
-                    folder = MediaFolder.objects.get(id=delete_id)
-                    folder.delete()
-                    return JsonResponse({'message': 'Deleted Successfully'})
-                except MediaFolder.DoesNotExist:
-                    return JsonResponse({'message': 'Folder Doesn\'t Exists'}, status=500)
+                folder = MediaFolder.objects.filter(id__in=delete_id)
+                if not folder.exists():
+                    return JsonResponse({'message': 'Folder Doesn\'t Exist'}, status=404)
+                folder.delete()
+                return JsonResponse({'message': 'Deleted Successfully'})
+            elif file_type == "file":
+                files = MediaFile.objects.filter(id__in=delete_id)
+                total_counts = files.count()
+                if not files.exists():
+                    return JsonResponse({'message': 'File Doesn\'t Exist'}, status=404)
+                files.delete()
+                return JsonResponse({'message': 'Deleted Successfully', "count": total_counts})
             else:
-                try:
-                    folder = MediaFile.objects.get(id=delete_id)
-                    folder.delete()
-                    return JsonResponse({'message': 'Deleted Successfully'})
-                except MediaFolder.DoesNotExist:
-                    return JsonResponse({'message': 'File Doesn\'t Exists'}, status=500)
+                return JsonResponse({'message': 'Invalid Operation'}, status=400)
 
         except (ValueError, TypeError) as e:
             return JsonResponse({'message': str(e)}, status=500)
-        except Exception:
+        except Exception as e:
+            print(e)
             return JsonResponse({'message': 'Internal server error'}, status=500)
 
     return JsonResponse({'message': 'This request is not available'}, status=500)
 
 
-@login_required(login_url="/user/login/")
+@login_required(login_url=FILEHUB_LOGIN_URL)
 @csrf_exempt
-def UploadFile(request):
+def upload_file(request):
     if request.method == 'POST':
         try:
             folder_id = request.POST.get('folder_id', None)
