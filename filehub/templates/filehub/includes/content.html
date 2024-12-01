@@ -1,0 +1,9 @@
+<div class="col-md-10 px-md-0 position-relative" id="filemanager_content">
+    {% with sorting=sorting allowed_exts=allowed_exts %}
+        {% include 'filehub/includes/content-header.html' %}
+    {% endwith %}
+
+    <div id="filemanager_files" class="p-3">
+        <div class="filemanager_files_container"></div>
+    </div>
+</div>

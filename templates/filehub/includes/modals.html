@@ -1,0 +1,78 @@
+<!-- Modal -->
+<div class="modal fade" id="addFolderModal" tabindex="-1" aria-labelledby="addFolderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addFolderModalLabel">Folder</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <input type="text" placeholder="Enter your folder name" class="form-control folderNewName">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" data-id="" class="btn btn-primary createNewFolder w-100">Create</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="fileUploadModal" tabindex="-1" aria-labelledby="fileUploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="fileUploadModalLabel">Upload Files</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="dropZone">
+                    <input type="file" multiple id="fileDropRef">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <h3>Drag and drop file here</h3>
+                    <h3>OR</h3>
+                    <label for="fileDropRef">Browse Files</label>
+                </div>
+
+                <div class="files-list"></div>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-danger clearUploadFiles" disabled>Clear All Files</button>
+                <button type="button" class="btn btn-primary startUploadFiles" disabled>Start Upload</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="previewFileModal" tabindex="-1" aria-labelledby="previewFileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewFileModalLabel">Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0"></div>
+        </div>
+    </div>
+</div>
+
+<div class="spinner full show">
+    <i class="fa-spin fas fa-spinner"></i>
+</div>
+
+<div class="dropdown-menu position-fixed context_menu">
+    <button class="dropdown-item open" type="button"><i class="fa-solid fa-folder me-1"></i> Open</button>
+    <button class="dropdown-item createFolder" type="button"><i class="fa-solid fa-folder-plus me-1"></i> Create
+        Sub-Folder
+    </button>
+    <button class="dropdown-item cut" type="button"><i class="fa-solid fa-scissors me-1"></i> Cut</button>
+    <button class="dropdown-item copy" type="button"><i class="fa-solid fa-copy me-1"></i> Copy</button>
+    <button class="dropdown-item paste" type="button"><i class="fa-solid fa-paste me-1"></i> Paste</button>
+    <button class="dropdown-item rename" type="button"><i class="fa-solid fa-pen-to-square me-1"></i> Rename</button>
+    <div class="dropdown-divider"></div>
+    <button class="dropdown-item download" type="button"><i class="fa-solid fa-arrow-down me-1"></i> Download</button>
+    <button class="dropdown-item showURL" type="button"><i class="fa-solid fa-link me-1"></i> Show URL</button>
+    <button class="dropdown-item info" type="button"><i class="fa-solid fa-info-circle me-1"></i> Info</button>
+    <div class="dropdown-divider"></div>
+    <button class="dropdown-item delete" type="button"><i class="fa-solid fa-trash me-1"></i> Delete</button>
+</div>
