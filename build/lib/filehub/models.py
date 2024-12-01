@@ -1,18 +1,18 @@
 from django.db import models
 
 from filehub.settings import EMPTY_FOLDER_SIZE
+from userauth.models import User
 from django.db.models import Sum, Value, IntegerField
 from django.db.models.functions import Coalesce
 from filehub.core import FolderManager
 from django.core.exceptions import ValidationError
-from django.conf import settings
 
 
 # Create your models here.
 class MediaFolder(models.Model):
     folder_name = models.CharField(max_length=255)
     parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.CASCADE)
-    upload_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    upload_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     upload_date = models.DateTimeField(auto_now_add=True, null=True)
     modify_date = models.DateTimeField(auto_now=True, null=True)
 
@@ -79,7 +79,7 @@ class MediaFile(models.Model):
     folder = models.ForeignKey(MediaFolder, on_delete=models.CASCADE, null=True, blank=True)
     file_type = models.CharField(max_length=50, blank=True, null=True)
     file_size = models.PositiveIntegerField(default=0, blank=True)
-    upload_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    upload_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     upload_date = models.DateTimeField(auto_now_add=True, null=True)
     modify_date = models.DateTimeField(auto_now=True, null=True)
 
