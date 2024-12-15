@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="django_filehub",
-    version="0.2.1",
+    version="0.2.2",
     author="Suresh Chand",
     author_email="scthakuri12a@gmail.com",
     packages=find_packages(),
@@ -27,6 +27,7 @@ setup(
             "templates/*",
             "static/*",
             "templatetags/*",
+            "migrations/*",
         ],
     },
     long_description=open('README.md').read(),

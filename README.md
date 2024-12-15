@@ -42,7 +42,6 @@ urlpatterns = patterns('',
 4. Make migrations to add necessary database tables
 
 ```bash
-python manage.py makemigrations
 python manage.py migrate
 ```
 
