@@ -2,13 +2,14 @@ from setuptools import setup, find_packages
 
 setup(
     name="django_filehub",
-    version="0.1.9",
+    version="0.2.0",
     author="Suresh Chand",
     author_email="scthakuri12a@gmail.com",
     packages=find_packages(),
     install_requires=[
         "django",
-        "requests"
+        "requests",
+        "pillow"
     ],
     classifiers=[  # Optional
         # How mature is this project? Common values are
