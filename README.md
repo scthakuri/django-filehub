@@ -16,7 +16,7 @@
 1. Install django-filehub using [pip](https://pip.pypa.io/en/stable/) (or any other way to install python package) from [PyPI](https://pypi.org/).
 
 ```bash
-pip install django_filehub
+pip install django-filehub
 ```
 
 2. Add `filehub` to INSTALLED_APPS in `settings.py` for your project:
@@ -24,7 +24,7 @@ pip install django_filehub
 ```python
 INSTALLED_APPS = (
     ...
-    'tinymce',
+    'filehub',
     ...
 )
 ```
@@ -34,7 +34,7 @@ INSTALLED_APPS = (
 ```python
 urlpatterns = patterns('',
     ...
-    path('tinymce/', include('tinymce.urls')),
+    path('admin/', include('filehub.urls')),
     ...
 )
 ```

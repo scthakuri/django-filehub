@@ -10,19 +10,17 @@ from django.conf import settings
 
 class ImagePickerWidget(forms.Textarea):
     """
-    TinyMCE widget. Set settings.TINYMCE_JS_URL to set the location of the
-    javascript file. Default is "STATIC_URL + 'tinymce/tinymce.min.js'".
-    You can customize the configuration with the mce_attrs argument to the
-    constructor.
+    A custom widget for selecting images from a file manager.
 
-    In addition to the standard configuration you can set the
-    'content_language' parameter. It takes the value of the 'language'
-    parameter by default.
+    This widget renders a textarea for the image URL, and provides a button 
+    that opens a file manager to select an image. Once an image is selected, 
+    the URL is inserted into the textarea. The widget also displays the 
+    selected image's name, size, and type (if it's an image).
 
-    In addition to the default settings from settings.TINYMCE_DEFAULT_CONFIG,
-    this widget sets the 'language' and 'directionality' parameters by default.
-    The first is derived from the current Django language, the second from the
-    'content_language' parameter.
+    The widget uses the `filehub:browser_select` URL for the file manager 
+    and allows setting a callback function for handling the image selection.
+
+    This widget is designed to work with Django's admin and forms framework.
     """
 
     css_included = False
