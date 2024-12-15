@@ -1,2 +1,3 @@
 recursive-include filehub/templates *
 recursive-include filehub/static *
+recursive-include filehub/templatetags *

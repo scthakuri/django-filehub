@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="django_filehub",
-    version="0.1.6",
+    version="0.1.9",
     author="Suresh Chand",
     author_email="scthakuri12a@gmail.com",
     packages=find_packages(),
@@ -15,7 +15,7 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Framework :: Django",
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
@@ -25,6 +25,7 @@ setup(
         "django_filehub": [
             "templates/*",
             "static/*",
+            "templatetags/*",
         ],
     },
     long_description=open('README.md').read(),

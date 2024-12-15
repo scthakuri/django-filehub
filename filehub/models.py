@@ -4,11 +4,13 @@ from typing import LiteralString
 from django.db import models
 
 from filehub.settings import EMPTY_FOLDER_SIZE, MEDIA_URL, DIRECTORY
-from userauth.models import User
 from django.db.models import Sum, Value, IntegerField
 from django.db.models.functions import Coalesce
 from filehub.core import FolderManager
 from django.core.exceptions import ValidationError
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 
 # Create your models here.
