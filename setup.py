@@ -2,25 +2,25 @@ from setuptools import setup, find_packages
 
 setup(
     name="django_filehub",
-    version="0.2.5",
+    version="0.2.6",
     author="Suresh Chand",
     author_email="scthakuri12a@gmail.com",
     description="Filehub is a Django-based file management app that simplifies file handling within your Django projects. It supports file uploads, storage, and retrieval, making it easy to integrate robust file management features into your applications.",
     packages=find_packages(),
+    license="BSD",
     install_requires=[
         "django",
         "requests",
         "pillow"
     ],
-    classifiers=[  # Optional
-        # How mature is this project? Common values are
-        #   3 - Alpha
-        #   4 - Beta
-        #   5 - Production/Stable
-        "Development Status :: 4 - Beta",
-        "Framework :: Django",
+    classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
+        "Framework :: Django",
+        "Environment :: Web Environment",
+        "Intended Audience :: Developers",
+        "Operating System :: OS Independent",
+        "Development Status :: 5 - Production/Stable",
+        "License :: OSI Approved :: BSD License"
     ],
     include_package_data=True,
     package_data={
@@ -29,6 +29,9 @@ setup(
             "static/*",
             "templatetags/*",
             "migrations/*",
+            "AUTHORS",
+            "LICENSE",
+            "README.md"
         ],
     },
     long_description=open('README.md').read(),

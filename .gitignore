@@ -1,6 +1,10 @@
-/.git
-/.idea
-/build
-/dist
-/django_filehub.egg-info
-django_filehub.egg-info/
+*.pyc
+docs/_build/
+dist
+*.egg-info
+*.pot
+.DS_store
+fabfile.py
+NOTES.md
+.tox/*
+.flake8

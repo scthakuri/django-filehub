@@ -1,0 +1,106 @@
+<div class="filemanager_content_top px-3 border border-top-0 border-start-0 w-100 d-flex justify-content-between align-items-center">
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item click"><a>Home</a></li>
+        </ol>
+    </nav>
+
+    <div class="middle_part">
+        <div class="circle-line circleLoading">
+            <div class="circle-red">&nbsp;</div>
+            <div class="circle-blue">&nbsp;</div>
+            <div class="circle-green">&nbsp;</div>
+            <div class="circle-yellow">&nbsp;</div>
+        </div>
+    </div>
+
+    <div class="right_part">
+        <div class="btn-group me-2">
+            <div class="dropdown">
+                <button class="btn dropdown-toggle py-3" type="button" id="fileSortingOption"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-solid fa-arrow-down-short-wide"></i>
+                    Filter By
+                </button>
+                <ul class="dropdown-menu file-filtering-options p-2"
+                    aria-labelledby="fileSortingOption">
+                    <li class="pb-1">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="filterBy" id="filterByall" checked
+                                   value="">
+                            <label class="form-check-label" for="filterByall">
+                                All
+                            </label>
+                        </div>
+                    </li>
+
+                    {% for category, extensions in allowed_exts.items %}
+                        <li class="pb-1">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="filterBy" id="filterBy{{ category }}"
+                                       value="{{ category }}">
+                                <label class="form-check-label" for="filterBy{{ category }}">
+                                    {{ category|title }}
+                                </label>
+                            </div>
+                        </li>
+                    {% endfor %}
+
+                    <li class="pb-1">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="filterBy" id="filterByfiles"
+                                   value="files">
+                            <label class="form-check-label" for="filterByfiles">
+                                Files
+                            </label>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="dropdown">
+                <button class="btn dropdown-toggle py-3" type="button" id="fileSortingOption"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-solid fa-arrow-down-short-wide"></i>
+                    Sort By
+                </button>
+                <ul class="dropdown-menu file-sorting-options p-2" aria-labelledby="fileSortingOption">
+                    {% for key, value in sorting.sort.items %}
+                        <li class="pb-1">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                        {% if key == 'date' %}
+                                       checked
+                                        {% endif %}
+                                       type="radio" name="sortingBy" id="sortingBy{{ key }}" value="{{ key }}">
+                                <label class="form-check-label" for="sortingBy{{ key }}">
+                                    {{ value }}
+                                </label>
+                            </div>
+                        </li>
+                    {% endfor %}
+
+
+                    {% if sorting.order %}
+                        <div class="dropdown-divider"></div>
+                        {% for key, value in sorting.order.items %}
+                            <li class="pb-1">
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                            {% if key == 'desc' %}
+                                           checked
+                                            {% endif %}
+                                           type="radio" name="sortingOrder" id="sortingOrder{{ key }}"
+                                           value="{{ key }}">
+                                    <label class="form-check-label" for="sortingOrder{{ key }}">
+                                        {{ value }}
+                                    </label>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

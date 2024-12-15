@@ -1,0 +1,119 @@
+{% if not css_included %}
+<style>
+    .image_picker_container {
+        width: 100%;
+    }
+
+    .empty_placeholder {
+        min-height: 150px;
+        border: 3px dashed #d5d5d5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        width: 100%;
+        border-radius: 5px;
+        position: relative;
+    }
+
+    .empty_placeholder a {
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    body .image_picker_container.added .empty_placeholder {
+        display: none !important;
+    }
+
+    body .image_fill_placeholder i {
+        position: absolute;
+        background: red;
+        color: #fff;
+        width: 25px;
+        height: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 100%;
+        right: 10px;
+        top: 10px;
+        cursor: pointer;
+    }
+
+    body .image_fill_placeholder img {
+        width: 100%;
+        max-height:300px;
+        object-fit: cover;
+        object-position: top;
+    }
+
+    .image_picker_container input,
+    .image_picker_container textarea {
+        display: none !important;
+    }
+
+    body .image_picker_container {
+        position: relative;
+    }
+
+    body .image_fill_placeholder svg {
+        position: absolute;
+        background: red;
+        color: #fff;
+        width: 25px;
+        height: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 100%;
+        right: 10px;
+        top: 10px;
+        cursor: pointer;
+    }
+
+    body .fancybox-content{
+        max-height:85vh !important;
+    }
+</style>
+{% endif %}
+
+<div class="image_picker_container {% if value %}added{% endif %}">
+    {{ input_field }}
+    <div class="empty_placeholder">
+        <a href="{{ filemanager_url }}" class="select_{{ name }}_url openImagePicker">Select File</a>
+    </div>
+
+    {% if value %}
+        {% if is_image %}
+            <div class="image_fill_placeholder mt-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512">
+                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                          stroke-width="32" d="M368 368L144 144M368 144L144 368"></path>
+                </svg>
+                <img src="{{ value }}" style="width:auto;max-width:100%;" alt="Preview File"/>
+            </div>
+        {% else %}
+            <div class="image_fill_placeholder mt-2"
+                 style="border: 2px solid #eeeeee;border-radius: 10px;padding: 10px;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512">
+                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                          stroke-width="32" d="M368 368L144 144M368 144L144 368"></path>
+                </svg>
+
+                <div class="file_card" style="display: flex;align-items: center;gap: 10px;">
+                    <img style="width:50px;"
+                         src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAACx0lEQVR4nO2bu2sVQRTGfzHgg2gaG41YmitYirGwFgTFFDYWuQFRY2HjK/ioJFhEbQQhGAOCCP4BaqcWtoqFiFWuNiqIYHwWBgNXBubCYVjjZvfM7sy988HhLlz2O+d8O68zuwPVYwAYBc4A55VtAthOoOgDJoFvQNuzPQUaBIRVwP0KEpf2FRghEEw6wbWAWWBa0a4DD4E/ws9HYEPdyQ84zX4OWOPRn3nqC8LfRWrGQRHMvOfkOzgufL6oaoA7BBy21xJnRTC3qggGGBI+f/h2thq4KxyOO/9fFv+Z66ogxxxv2Ag8c5wd7RUBhm2flo5u2imv6wXYA3wWDpbsSiwLXSfAEWBRkP+yIz3dLkCfk0xnobHzP/d1hQBrM5ayr4CtOe6NXoBNwHOH8AGwPuf9UQswCLxxyG4A/SvgiFqAK85If7IAR9QCzAuSEwU5ZgWH2QSJSoDfgsR0hyKD5zvBsZ/IBPggSPYVSP6OuN+UqOuITIAZZ8Ezk3Nv7rbz5I2dolqoCDAEfFpm2ymv3csok6NZB+wAXhdMfME++aqTV18J9gN77d5env2508CBivt85eVw6EgCkFoAqQtQcgy4Zuf/q/RoF1i0BOa3JwVoFyAxm6JND29+mxkbrtqxq5CMK6wc/2VGhOAFaHoUYMxz7GpdYEz5ze+05YyiC4SCJACpBZC6ADWMAcMZu0Ea9hbY5jl2FZJzHqdB87FFFC2g5SH5ViwtIBQkAUgtgNQFqKkWaKZyGC/TYCqH8dt61bpAKocDQJoGSdMgaR1AqgVIxRB1j6Q1IQ2CKDy8n4JkM/Fgi4j7exmil4LoGPFgQuvQ1CVB9CWkg4jLYLdzbO5CGbJBeyagQ2YOJT4CpjyUu2Vtysa2JOJ9r3FwcsQeQ21HZibmXSihATwJIKm89tjuTqujYU9lms/etd/+ljUTk4ltRYn/BZi9S5cZIajtAAAAAElFTkSuQmCC"
+                         alt="File"/>
+                    <div class="file_info">
+                        <div class="file_name">{{ basename }}</div>
+                        <div class="file_size" style="color:#ccc;">Size: {{ size }}</div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>

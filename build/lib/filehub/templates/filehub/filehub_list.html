@@ -1,0 +1,70 @@
+{% load filehub %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filehub</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{% static 'filehub/toast/dist/simple-notify.min.css' %}">
+    <style>
+        :root{
+            --primary:{{ theme_color }};
+            --primary-rgb: {{ theme_color|hex_to_rgb }};
+        }
+    </style>
+    <link rel="stylesheet" href="{% static 'filehub/style.css' %}?ver=2.0.0">
+</head>
+
+<body class="filemanager_body {% if select_files == 'true' %}filemanager_select_body{% endif %}">
+<div id="filemanager">
+    {% include 'filehub/includes/top-header.html' %}
+
+    <div id="filemanage_container" class="row">
+        {% include 'filehub/includes/tree.html' %}
+
+
+        {% with sorting=sorting allowed_exts=allowed_exts %}
+            {% include 'filehub/includes/content.html' %}
+        {% endwith %}
+
+
+        <div class="select_files_container d-flex justify-content-between align-items-center flex-wrap py-2">
+            <div class="left text-muted ms-3">
+                Version: 1.0
+            </div>
+
+            <div class="middle_part text-muted">
+                Copyright 2024
+            </div>
+
+            <div class="right me-3">
+                <button type="button" class="btn btn-danger btn-sm deleteFiles">Delete Files</button>
+                {% if file_picker and select_files == 'true' %}
+                    <button type="button" class="btn btn-primary btn-sm selectFilesForEmbed">Select Files</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'filehub/includes/modals.html' %}
+
+<script>
+    const FM_REQ_URL = "{% url 'filehub:browser' %}";
+    const FM_MEDIA_URL = "{{media_url}}/";
+    const FM_SELECT_FILE = {{select_files}};
+    const FM_SELECT_MULTIPLE = {{select_multiple}};
+</script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'filehub/toast/dist/simple-notify.min.js' %}"></script>
+<script src="{% static 'filehub/main.js' %}?ver=2.1.0"></script>
+</body>
+
+</html>
