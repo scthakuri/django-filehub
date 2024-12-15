@@ -2,6 +2,8 @@
 
 <p align="center"><img src="https://socialify.git.ci/scthakuri/django-filehub/image?font=Inter&amp;forks=1&amp;issues=1&amp;language=1&amp;name=1&amp;owner=1&amp;pattern=Circuit%20Board&amp;pulls=1&amp;stargazers=1&amp;theme=Light" alt="project-image"></p>
 
+Filehub is a Django-based file management app that simplifies file handling within your Django projects. It supports file uploads, storage, and retrieval, making it easy to integrate robust file management features into your applications.
+
 ## Features
 
 - **File Uploads**: Seamlessly handle file uploads in your Django project.
