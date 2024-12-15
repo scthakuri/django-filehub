@@ -1,25 +1,20 @@
-from django import forms
+from django.contrib.admin import widgets as admin_widgets
 from django.db import models
-from django.urls import reverse
-from django.utils.safestring import mark_safe
+from filehub import widgets as filehub_widgets
 
 
-class ImagePickerField(models.CharField):
+class ImagePickerField(models.TextField):
+    """
+    A large string field for HTML content. It uses the TinyMCE widget in
+    forms.
+    """
+
     def formfield(self, **kwargs):
-        kwargs['widget'] = ImagePickerWidget
-        return super().formfield(**kwargs)
+        defaults = {"widget": filehub_widgets.ImagePickerWidget}
+        defaults.update(kwargs)
 
+        # As an ugly hack, we override the admin widget
+        if defaults["widget"] == admin_widgets.AdminTextareaWidget:
+            defaults["widget"] = filehub_widgets.AdminImagePickerWidget
 
-class ImagePickerWidget(forms.widgets.TextInput):
-    def render(self, name, value, attrs=None, renderer=None):
-        app_url = reverse('filehub:browser_select')
-        filemanagerurl = f"{app_url}?callback_fnc=" + name
-        attrs = attrs or {}
-        attrs['class'] = "form-control"
-
-        html = '<div class="input-group">'
-        html += super().render(name, value, attrs, renderer)
-        html += ('<div class="input-group-append"><a href="{url}" class="btn btn-outline-secondary '
-                 'imagePickerFancybox" type="button">Choose Image</a></div></div>')
-        html = html.format(url=filemanagerurl)
-        return mark_safe(html)
+        return super().formfield(**defaults)

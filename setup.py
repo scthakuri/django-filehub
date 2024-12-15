@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="django_filehub",
-    version="0.1.4",
+    version="0.1.6",
     author="Suresh Chand",
     author_email="scthakuri12a@gmail.com",
     packages=find_packages(),

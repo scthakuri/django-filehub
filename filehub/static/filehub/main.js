@@ -1,14 +1,17 @@
 $(document).ready(function () {
     let sortby = "date", sortorder = "desc", searchvalue = "", filterby = "";
     let filesArray = [];
+    let files_list = [];
+    let folders_list = [];
+
     let hasMoreData = false;
     let currentIndex = 0;
-    var clipboard = {
+    const clipboard = {
         'empty': true,
         'path': 'full path will come here',
         'mode': 'cut or copy',
         'type': 'file or dir'
-    }
+    };
     let current_directory_id = "";
     let current_page = 1;
     let contextData = {
@@ -18,6 +21,8 @@ $(document).ready(function () {
     }
     let fileUploadedrefresh = false;
     let selectedFiles = [];
+    let selectedToDeleteFiles = [];
+    let page = 1;
 
     $('body').tooltip({
         selector: '[data-bs-title]'
@@ -26,18 +31,19 @@ $(document).ready(function () {
     const FILEMANAGER_CONTAINER = $(document).find("#filemanage_container");
     const FILEMANAGER_TREE = $(document).find("#filemanager_tree");
     const CONTEXTMENU = $(document).find(".context_menu");
-    const DROPZONE = $(document).find("#fileUploadModal .dropZone");
     const FILELISTS_CONTAINER = $(document).find(".filemanager_files_container");
     const FILELISTS = $(document).find("#fileUploadModal .files-list");
     const PREVIEWMODAL = $(document).find("#previewFileModal");
     const SPINNER_FULL = $(document).find(".spinner.full");
     const FILES_SPINNER = FILEMANAGER_CONTAINER.find(".circleLoading");
     const ADD_FOLDER_MODAL = $(document).find("#addFolderModal");
+    const FILE_URL_MODAL = $(document).find("#showFileModal");
+    const FILE_INFO_MODAL = $(document).find("#infoFileModal");
 
     $(document).on("change", "[name=sortingOrder]", function () {
         sortorder = $(this).val();
         page = 1;
-        reloadData();
+        reloadData()
     });
 
     $(document).on("change", "[name=sortingBy]", function () {
@@ -84,18 +90,20 @@ $(document).ready(function () {
 
     function handleAjaxError(error) {
         try {
-            let message = '';
+            let message;
             try {
                 message = error.responseJSON.message;
             } catch (error) {
                 message = error.responseText;
             }
 
-            if (message.length > 0) {
+            if (message) {
                 showMessage(message, "error", "Error")
+            } else {
+                showMessage("Unable to perform action!!!", "error", "Error")
             }
         } catch (error) {
-            console.warn(error);
+            showMessage("Unable to perform action!!!", "error", "Error")
         }
     }
 
@@ -109,7 +117,7 @@ $(document).ready(function () {
             if (item.children.length > 0) {
                 html += `
                     <div 
-                        class="list-group-item border-0 collapsed ${item.id == current_directory_id ? "active" : ""}" 
+                        class="list-group-item border-0 collapsed ${item.id === current_directory_id ? "active" : ""}" 
                         data-bs-toggle="collapse" 
                         data-bs-target="#tree-item-${item.id}"
                         style="padding-left:${indent}" aria-level="${level}" aria-expanded="false"
@@ -127,7 +135,7 @@ $(document).ready(function () {
                 html += '</div>';
             } else {
                 html += `<div 
-                    class="list-group-item border-0 ${item.id == current_directory_id ? "active" : ""}" 
+                    class="list-group-item border-0 ${item.id === current_directory_id ? "active" : ""}" 
                     style="padding-left:${indent}" 
                     aria-level="${level}"
 
@@ -159,7 +167,7 @@ $(document).ready(function () {
         return imageExtensions.includes(fileExtension);
     }
 
-    function getFileHtml(file, dir_id) {
+    function getFileHtml(file) {
         let faicon = "faicon";
         let filePreview = '<span class="fm-item-thumbnail fas fa-file"></span>';
 
@@ -167,18 +175,18 @@ $(document).ready(function () {
         const isImage = isValidImage(file.name);
         if (isImage) {
             faicon = "faimage";
-            const getFileURL = FM_MEDIA_URL + encodeURIComponent(file.uri);
+            const getFileURL = file.uri;
             filePreview = `<div class="fm-item-thumbnail" style="background-image:url(${getFileURL})"></div>`;
-        } else if (fileExt == 'pdf') {
+        } else if (fileExt === 'pdf') {
             filePreview = '<span class="fm-item-thumbnail fas fa-file-pdf"></span>';
-        } else if (fileExt == 'doc' || fileExt == 'docx') {
+        } else if (fileExt === 'doc' || fileExt === 'docx') {
             filePreview = '<span class="fm-item-thumbnail fas fa-file-word"></span>';
         }
 
         let checkboxHTML = '';
-        if (FM_SELECT_FILE && FM_SELECT_MULTIPLE) {
+        if (FM_SELECT_FILE) {
             checkboxHTML = `<div class="form-check">
-                <input class="form-check-input fileSelect" data-type="${isImage ? "image" : "file"}" data type="checkbox">
+                <input class="form-check-input fileSelect" name="file_select" data-type="${isImage ? "image" : "file"}" type="${FM_SELECT_MULTIPLE ? 'checkbox' : 'radio'}">
             </div>`;
         }
 
@@ -186,13 +194,13 @@ $(document).ready(function () {
             class="fm-folder border fm-item ${faicon}"
             data-type="file"
             data-fileType="child"
-            data-fileName="${file.uri}"
+            data-fileName="${file.basename}"
             data-id="${file.id}"
             data-ext="${fileExt}"
         >
             ${checkboxHTML}
             ${filePreview}
-            <span class="fm-item-title">${file.name}</span>
+            <span class="fm-item-title">${file.display_name}</span>
         </div>`;
     }
 
@@ -215,6 +223,7 @@ $(document).ready(function () {
     }
 
     function renderFolders(folders) {
+
         for (let i = 0; i < folders.length; i++) {
             FILELISTS_CONTAINER.append(`
                 <div 
@@ -258,6 +267,77 @@ $(document).ready(function () {
         }
     }
 
+    const FILE_UPLOAD_CORNER_NOTI = $(document).find(".file_uloading_corner_notification");
+
+    function handleBodyDragUpload(files) {
+        FILE_UPLOAD_CORNER_NOTI.addClass("uploading");
+        const progressBar = FILE_UPLOAD_CORNER_NOTI.find(".progress-bar");
+
+        function uploadFile(index) {
+            if (index >= files.length) {
+                FILE_UPLOAD_CORNER_NOTI.removeClass("uploading");
+                return;
+            }
+
+            const file = files[index];
+            FILE_UPLOAD_CORNER_NOTI.find(".name").text(file.name);
+            FILE_UPLOAD_CORNER_NOTI.find(".size").text(`${index + 1}/${files.length}`);
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('folder_id', current_directory_id);
+
+            $.ajax({
+                url: FM_REQ_URL + "ajax/upload/",
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                beforeSend: function () {
+                    progressBar.removeClass("bg-success bg-danger").addClass("bg-primary");
+                },
+                xhr: function () {
+                    const xhr = new window.XMLHttpRequest();
+                    xhr.upload.addEventListener('progress', function (e) {
+                        if (e.lengthComputable) {
+                            const percent = (e.loaded / e.total) * 100;
+                            progressBar.width(percent + '%');
+                            progressBar.attr('aria-valuenow', percent);
+                        }
+                    });
+                    return xhr;
+                },
+                success: function (response) {
+                    const file = response.data;
+
+                    const newFileElement = $(`<div class="fm-folder border fm-item faimage" data-type="file" data-filetype="child" data-filename="${file.basename}" data-id="${file.id}" data-ext="${file.extension}">
+                        <div class="form-check">
+                            <input class="form-check-input fileSelect" name="file_select" data-type="image" type="checkbox">
+                        </div>
+                        <div class="fm-item-thumbnail" style="background-image:url(${file.uri})"></div>
+                        <span class="fm-item-title">${file.display_name}</span>
+                    </div>`);
+
+                    const folders = FILELISTS_CONTAINER.find(".fm-folder[data-type=folder]");
+                    if (folders.length > 0) {
+                        folders.last().after(newFileElement);
+                    } else {
+                        FILELISTS_CONTAINER.prepend(newFileElement);
+                    }
+                    progressBar.removeClass("bg-primary").addClass("bg-success");
+                },
+                error: function () {
+                    showMessage(`Unable to upload file: ${file.name}`, "error", "Error");
+                },
+                complete: function () {
+                    uploadFile(index + 1);
+                }
+            });
+        }
+
+        uploadFile(0);
+    }
+
     function startUploadingServer() {
         if (currentIndex < filesArray.length) {
             fileUploadedrefresh = true;
@@ -293,11 +373,11 @@ $(document).ready(function () {
                     });
                     return xhr;
                 },
-                success: function (response) {
+                success: function () {
                     progressBar.removeClass("bg-primary").addClass("bg-success");
                     deleteFile.html('<i class="fa-solid fa-circle-check text-success" data-bs-title="Upload Successfully" data-bs-toggle="tooltip"></i>');
                 },
-                error: function (error) {
+                error: function () {
                     progressBar.removeClass("bg-primary").addClass("bg-danger");
                     deleteFile.html('<i class="fa-solid fa-triangle-exclamation text-danger" data-bs-title="Unable to upload File" data-bs-toggle="tooltip"></i>');
                     deleteFile.attr("data-index", currentIndex);
@@ -316,7 +396,8 @@ $(document).ready(function () {
     }
 
     function handleFileUpload(files) {
-        for (var i = 0; i < files.length; i++) {
+        let fileEle;
+        for (let i = 0; i < files.length; i++) {
             const file = files[i];
 
             fileEle = $(`<div class="single-file">
@@ -374,25 +455,25 @@ $(document).ready(function () {
         updateFooterStatus();
     });
 
-    console.log(DROPZONE)
-    DROPZONE.on({
-        dragover: function (e) {
-            e.stopPropagation();
-            e.preventDefault();
-            $(this).css("border-color", "var(--primary)")
-        },
-        dragleave: function (e) {
-            e.stopPropagation();
-            e.preventDefault();
-            $(this).css("border-color", "#ccc")
-        },
-        drop: function (e) {
-            e.stopPropagation();
-            e.preventDefault();
-            $(this).css("border-color", "#ccc")
+    const BODY_DRAGGING_ELE = $(document).find(".body_dragging");
+    $(document.body).on('dragover dragenter', function (event) {
+        event.preventDefault();
+        $(document.body).addClass("dragover");
+    });
 
-            const files = e.originalEvent.dataTransfer.files;
+    BODY_DRAGGING_ELE.on('dragleave', function (event) {
+        $(document.body).removeClass('dragover');
+    });
+
+    BODY_DRAGGING_ELE.on('drop', function (event) {
+        event.preventDefault();
+        $(document.body).removeClass('dragover');
+
+        const files = event.originalEvent.dataTransfer.files;
+        if ($(document).find("#fileUploadModal").hasClass('show')) {
             handleFileUpload(files);
+        } else {
+            handleBodyDragUpload(files);
         }
     });
 
@@ -416,8 +497,9 @@ $(document).ready(function () {
 
     const addFolderModal = document.getElementById('addFolderModal');
     addFolderModal.addEventListener('hidden.bs.modal', function () {
-        $("#addFolderModal").find("input").val("");
-        $("#addFolderModal").find(".createNewFolder").attr("data-id", "").text("Create");
+        const addFolderModalEle = $(document).find("#addFolderModal")
+        addFolderModalEle.find("input").val("");
+        addFolderModalEle.find(".createNewFolder").attr("data-id", "").text("Create");
         contextData = {
             id: 0,
             name: "",
@@ -435,50 +517,148 @@ $(document).ready(function () {
     });
 
     $(document).on("click", ".context_menu .rename", function () {
-        ADD_FOLDER_MODAL.find(".folderNewName").val(contextData.name);
-        ADD_FOLDER_MODAL.find(".createNewFolder").attr("data-id", contextData.id).text("Update");
+        ADD_FOLDER_MODAL.find(".folderNewName").val(contextData.basename);
+        ADD_FOLDER_MODAL.find(".createNewFolder")
+            .attr("data-id", contextData.id)
+            .attr("data-type", contextData.type)
+            .text("Update");
         ADD_FOLDER_MODAL.modal("show");
+        hideContextMenu();
+    });
+
+    $(document).on("click", ".context_menu .showURL", function () {
+        if (contextData.type === "file") {
+            FILE_URL_MODAL.find("input").val(contextData.url);
+            FILE_URL_MODAL.find("a").attr("href", contextData.url);
+            FILE_URL_MODAL.modal("show");
+            hideContextMenu();
+        }
+    });
+
+    $(document).on("click", ".context_menu .info", function () {
+        FILE_INFO_MODAL.find(".modal-title").text(contextData.type === "file" ? "File Information" : "Folder Information");
+        FILE_INFO_MODAL.find(".fileName").text(contextData.name);
+
+        const fileDimensionEle = FILE_INFO_MODAL.find(".fileDimensions");
+        if (contextData?.width && contextData?.height) {
+            fileDimensionEle.text(`${contextData.width}x${contextData.height}`);
+            fileDimensionEle.closest("tr").removeClass("d-none");
+        } else {
+            fileDimensionEle.closest("tr").addClass("d-none");
+        }
+        FILE_INFO_MODAL.find(".fileSize").text(formatSize(contextData.size));
+        if (contextData.type === "file") {
+            FILE_INFO_MODAL.find(".filePath").text(contextData.uri);
+            FILE_INFO_MODAL.find(".fileURL").html(`<a href="${contextData.url}" target="_blank">${contextData.url}</a>`);
+            FILE_INFO_MODAL.find(".fileURL, .filePath").closest("tr").removeClass("d-none");
+        } else {
+            FILE_INFO_MODAL.find(".fileURL, .filePath").closest("tr").addClass("d-none");
+        }
+        FILE_INFO_MODAL.find(".fileCreated").text(contextData.uploaded_at);
+        FILE_INFO_MODAL.find(".fileModified").text(contextData.modify_date);
+
+        FILE_INFO_MODAL.modal("show");
+        hideContextMenu();
+    });
+
+    FILE_INFO_MODAL[0].addEventListener("bs.modal.hide", function () {
+        FILE_INFO_MODAL.find(".fileName, .fileDimensions, .fileSize, .filePath, .fileURL, .fileCreated, .fileModified").html("");
+    })
+
+    document.getElementById("showFileModal").addEventListener('hidden.bs.modal', function () {
+        FILE_URL_MODAL.find("input").val("");
+        FILE_URL_MODAL.find("a").attr("href", "#");
     });
 
     $(document).on("click", ".context_menu .createFolder", function () {
+        contextData["createFolder"] = "menu";
         ADD_FOLDER_MODAL.find(".folderNewName").val("");
         ADD_FOLDER_MODAL.find(".createNewFolder").attr("data-id", "");
         ADD_FOLDER_MODAL.modal("show");
     });
 
     $(document).on("click", ".context_menu .open", function () {
-        if (contextData.type == 'folder') {
+        if (contextData.type === 'folder') {
             current_directory_id = contextData.id;
             page = 1;
             reloadData();
         } else {
-            openFilePreview(contextData.name, contextData.id);
+            openFilePreview(contextData.url);
         }
     });
 
-    $(document).on("click", ".context_menu .delete", function () {
+    $(document).on("click", ".deleteFiles", function () {
+        const btn = $(this);
         if (confirm("Are you sure want to delete?")) {
             $.ajax({
-                url: FM_REQ_URL + "ajax/delete-folder/",
+                url: FM_REQ_URL + "ajax/delete/",
                 type: "POST",
                 data: {
-                    type: contextData.type,
-                    delete_id: contextData.id
+                    type: "file",
+                    delete_id: selectedToDeleteFiles
                 },
                 dataType: "json",
                 beforeSend: function () {
                     FILES_SPINNER.removeClass("d-none");
                 },
                 success: function (res) {
-                    const ele = $(document).find(`.fm-item[data-id=${contextData.id}][data-type=${contextData.type}]`);
+                    selectedToDeleteFiles.forEach((item) => {
+                        const ele = $(document).find(`.fm-item[data-id=${item}][data-type=file]`);
+                        if (ele.length > 0) {
+                            ele.fadeOut("slow", function () {
+                                $(this).remove();
+                            })
+                        }
+                    });
+                    selectedToDeleteFiles = [];
+                    showMessage(res.message, "success", "Removed")
+                },
+                error: handleAjaxError,
+                complete: function () {
+                    FILES_SPINNER.addClass("d-none");
+                    btn.addClass("d-none");
+                }
+            });
+        }
+    })
+
+    $(document).on("click", ".context_menu .delete", function () {
+        if (confirm("Are you sure want to delete?")) {
+            const delete_type = contextData.type;
+            const delete_id = contextData.id;
+
+            hideContextMenu();
+
+            $.ajax({
+                url: FM_REQ_URL + "ajax/delete/",
+                type: "POST",
+                data: {
+                    type: delete_type,
+                    delete_id: [delete_id]
+                },
+                dataType: "json",
+                beforeSend: function () {
+                    FILES_SPINNER.removeClass("d-none");
+                },
+                success: function (res) {
+                    const ele = $(document).find(`.fm-item[data-id=${delete_id}][data-type=${delete_type}]`);
                     if (ele.length > 0) {
                         ele.fadeOut("slow", function () {
                             $(this).remove();
                         })
+                        const fileIndex = files_list.findIndex((item) => item.id === delete_id);
+                        if (fileIndex !== -1) {
+                            files_list.splice(fileIndex, 1);
+                        }
+
+                        const folderIndex = folders_list.findIndex((item) => item.id === delete_id);
+                        if (folderIndex !== -1) {
+                            folders_list.splice(folderIndex, 1);
+                        }
                     }
 
-                    if (contextData.type == 'folder') {
-                        const sideEle = $(document).find(`#filemanager_tree [data-id=${contextData.id}]`);
+                    if (delete_type === 'folder') {
+                        const sideEle = $(document).find(`#filemanager_tree [data-id=${delete_id}]`);
                         if (sideEle.length > 0) {
                             sideEle.fadeOut("slow", function () {
                                 $(this).remove();
@@ -490,7 +670,6 @@ $(document).ready(function () {
                 error: handleAjaxError,
                 complete: function () {
                     FILES_SPINNER.addClass("d-none");
-                    hideContextMenu();
                 }
             });
         }
@@ -507,18 +686,39 @@ $(document).ready(function () {
 
     $(document).on("contextmenu", ".fm-item, .list-group-item", function (e) {
         e.preventDefault();
+        const fileType = $(this).data("type");
+        const id = $(this).data("id");
         contextData = {
-            id: $(this).data("id"),
-            type: $(this).data("type"),
+            type: fileType,
+            id: id,
             name: $(this).data("filename")
         }
+        if (fileType === "file") {
+            const file = files_list.filter((item) => item.id === id);
+            if (file.length > 0) {
+                contextData = {...contextData, ...file[0]};
+            } else {
+                return false;
+            }
+        } else {
+            const folder = folders_list.filter((item) => item.id === id);
+            if (folder.length > 0) {
+                contextData = {...contextData, ...folder[0]};
+            } else {
+                return false;
+            }
+        }
 
-        if (contextData.type == 'folder') {
+        if (contextData.type === 'folder') {
             CONTEXTMENU.find(".createFolder").removeClass("d-none");
             CONTEXTMENU.find(".showURL").addClass("d-none");
+            CONTEXTMENU.find(".download").addClass("d-none");
+            CONTEXTMENU.find(".filedivider").addClass("d-none");
         } else {
             CONTEXTMENU.find(".createFolder").addClass("d-none");
             CONTEXTMENU.find(".showURL").removeClass("d-none");
+            CONTEXTMENU.find(".download").removeClass("d-none");
+            CONTEXTMENU.find(".filedivider").removeClass("d-none");
         }
 
         if (clipboard['empty']) {
@@ -544,15 +744,18 @@ $(document).ready(function () {
         }
     });
 
-    function openFilePreview(filename, id) {
+    function openFilePreview(filename) {
         if (isValidImage(filename)) {
-            const getFileURL = FM_MEDIA_URL + encodeURIComponent(filename);
-            const filePreview = `<img style="max-width:100%;" class="w-100 h-auto" src="${getFileURL}" />`;
+            const filePreview = `<img alt="Image" style="max-width:100%;" class="w-100 h-auto" src="${filename}" />`;
 
             PREVIEWMODAL.find(".modal-body").html(filePreview);
             PREVIEWMODAL.modal("show");
         }
     }
+
+    PREVIEWMODAL[0].addEventListener('hidden.bs.modal', function () {
+        PREVIEWMODAL.find(".modal-body").html("");
+    })
 
     function pluginReplySingle(filename) {
         try {
@@ -576,16 +779,15 @@ $(document).ready(function () {
 
     function pluginReplyMultiple() {
         try {
-            let html = '';
-            for (let i = 0; i < selectedFiles.length; i++) {
-                html += `<img class="img-fluid" src="${selectedFiles[i]}" alt="Image" />`;
+            let message = {
+                sender: "filehub",
+                html: "",
+                files: selectedFiles,
+                file: selectedFiles[0]
             }
-
-            const message = {
-                sender: 'filehub',
-                urls: selectedFiles,
-                html: html
-            };
+            for (let i = 0; i < selectedFiles.length; i++) {
+                message["html"] += `<img class="img-fluid" src="${selectedFiles[i].uri}" alt="Image" />`;
+            }
 
             if (checkhasInQuery("callback_fnc")) {
                 window.parent.onFileHubCallback(message, getFromSearchQuery("callback_fnc"));
@@ -599,46 +801,75 @@ $(document).ready(function () {
 
     $(document).on("click", ".selectFilesForEmbed", pluginReplyMultiple);
 
-    $(document).on("change", ".fileSelect", function () {
-        const ele = $(this).closest(".fm-item");
-        const fileURI = FM_MEDIA_URL + ele.data("filename");
-
-        if ($(this).is(":checked")) {
-            if (!selectedFiles.includes(fileURI)) {
-                selectedFiles.push(fileURI);
-            }
-        } else {
-            const indexToRemove = selectedFiles.indexOf(fileURI);
-            if (indexToRemove !== -1) {
-                selectedFiles.splice(indexToRemove, 1);
+    function updateDeleteButton() {
+        const deleteBtn = $(document).find(".deleteFiles");
+        if (deleteBtn.length > 0) {
+            if (selectedToDeleteFiles.length > 0) {
+                deleteBtn.removeClass("d-none");
+            } else {
+                deleteBtn.addClass("d-none");
             }
         }
-    })
+    }
 
-    $(document).on("click", ".fm-item[data-type=file]", function () {
-        if (FM_SELECT_FILE) {
-            if (FM_SELECT_MULTIPLE) {
-                const checkBox = $(this).find("[type=checkbox]");
-                checkBox.prop("checked", !checkBox.prop("checked")).trigger("change");
+    updateDeleteButton();
+
+    $(document).on("change", ".fileSelect", function () {
+        const ele = $(this).closest(".fm-item");
+        const fileID = parseInt(ele.attr("data-id"));
+        const fileIndex = files_list.findIndex((item) => item.id === fileID);
+
+        if (fileIndex !== -1) {
+            if (FM_SELECT_FILE && !FM_SELECT_MULTIPLE) {
+                if ($(this).is(":checked")) {
+                    selectedFiles.length = 0;
+                    selectedToDeleteFiles.length = 0;
+                    selectedFiles.push(files_list[fileIndex]);
+                    selectedToDeleteFiles.push(fileID);
+                } else {
+                    const indexToRemove = selectedFiles.findIndex((item) => item.id === fileID);
+                    if (indexToRemove !== -1) selectedFiles.splice(indexToRemove, 1);
+
+                    const indexIDToRemove = selectedToDeleteFiles.indexOf(fileID);
+                    if (indexIDToRemove !== -1) selectedToDeleteFiles.splice(indexIDToRemove, 1);
+                }
             } else {
-                pluginReplySingle($(this).data("filename"));
+                if ($(this).is(":checked")) {
+                    if (!selectedFiles.some(file => file.id === fileID)) {
+                        selectedFiles.push(files_list[fileIndex]);
+                        selectedToDeleteFiles.push(fileID);
+                    }
+                } else {
+                    const indexToRemove = selectedFiles.findIndex((item) => item.id === fileID);
+                    if (indexToRemove !== -1) selectedFiles.splice(indexToRemove, 1);
+
+                    const indexIDToRemove = selectedToDeleteFiles.indexOf(fileID);
+                    if (indexIDToRemove !== -1) selectedToDeleteFiles.splice(indexIDToRemove, 1);
+                }
             }
-        } else {
+
+            updateDeleteButton();
+        }
+    });
+
+
+    $(document).on("click", ".fm-item[data-type=file]", function (event) {
+        if (!$(event.target).is(":checkbox")) {
             const filename = $(this).data("filename");
             openFilePreview(filename, $(this).data("id"));
         }
     });
 
     function openParentIfClosed(ele) {
-        var parentFolders = ele.parents('.list-group-item[data-type="folder"]');
+        const parentFolders = ele.parents('.list-group-item[data-type="folder"]');
         parentFolders.removeClass('collapsed').attr("aria-expanded", true);
 
-        var listGroupFolders = ele.parents('.list-group');
+        const listGroupFolders = ele.parents('.list-group');
         listGroupFolders.addClass('show');
     }
 
     $(document).on("click", ".fm-item[data-type=folder]", function () {
-        if ($(this).data("id") != current_directory_id) {
+        if ($(this).data("id") !== current_directory_id) {
             current_directory_id = $(this).data("id");
             current_page = 1;
             reloadData();
@@ -646,7 +877,7 @@ $(document).ready(function () {
     });
 
     $(document).on("click", "#filemanager_tree .list-group-item", function () {
-        if ($(this).data("id") != current_directory_id) {
+        if ($(this).data("id") !== current_directory_id) {
             current_directory_id = $(this).data("id");
             current_page = 1;
             reloadData();
@@ -654,7 +885,7 @@ $(document).ready(function () {
     });
 
     $(document).on("click", ".breadcrumb-item.click", function () {
-        if ($(this).data("folder") != current_directory_id) {
+        if ($(this).data("folder") !== current_directory_id) {
             current_directory_id = $(this).data("folder");
             page = 1;
             reloadData();
@@ -669,33 +900,86 @@ $(document).ready(function () {
 
     $(document).on("click", ".createNewFolder", function () {
         const update_id = $(this).data("id");
+        const file_type = $(this).data("type");
         const name = $(document).find(".folderNewName").val();
 
+        const btn = $(this);
+        const btnHTML = btn.html();
+
         $.ajax({
-            url: FM_REQ_URL + "ajax/new-folder/",
+            url: FM_REQ_URL + "ajax/folder/",
             type: "POST",
             data: {
                 update_id: update_id,
                 name: name,
-                current_dir: contextData.id > 0 ? contextData.id : current_directory_id
+                current_dir: contextData.id > 0 ? contextData.id : current_directory_id,
+                file_type: file_type
             },
             dataType: "json",
             beforeSend: function () {
                 FILES_SPINNER.removeClass("d-none");
+                btn.prop("disabled", true).html('<i class="fa fa-spinner fa-spin"></i> Processing . . .');
             },
             success: function (data) {
+                ADD_FOLDER_MODAL.modal("hide");
+                const folder = data.data;
+
                 if (update_id) {
                     const ele = $(document).find(`.fm-item[data-id=${update_id}]`);
                     if (ele.length > 0) {
-                        ele.find(".fm-item-title").text(name);
+                        ele.find(".fm-item-title").text(folder.display_name);
+                        const fileIndex = files_list.findIndex(f => f.id === update_id);
+                        if (fileIndex !== -1) {
+                            files_list[fileIndex] = folder;
+                        }
                     }
 
                     const sideEle = $(document).find(`#filemanager_tree [data-id=${update_id}]`);
                     if (sideEle.length > 0) {
-                        sideEle.find("span.folder").text(name);
+                        sideEle.find("span.folder").text(folder.display_name);
+                        const folderIndex = folders_list.findIndex(f => f.id === update_id);
+                        if (folderIndex !== -1) {
+                            folders_list[folderIndex] = folder;
+                        }
                     }
                 } else {
-                    reloadData();
+                    FILELISTS_CONTAINER.prepend(`
+                        <div 
+                            class="fm-folder fm-item border fafolder"
+                            data-type="folder"
+                            data-fileType="child"
+                            data-fileName="${folder.basename}"
+                            data-id="${folder.id}"
+                        >
+                            <span class="fm-item-thumbnail fas fa-folder"></span>
+                            <span class="fm-item-title">${folder.display_name}</span>
+                        </div>`);
+                    folders_list.push(folder);
+
+                    if (current_directory_id) {
+                        if (contextData?.createFolder === "menu") {
+                            reloadData();
+                        } else {
+                            const sideEle = $(document).find(`#filemanager_tree [data-id=${current_directory_id}]`);
+                            if (sideEle.length > 0) {
+                                sideEle.next().prepend(`<div class="list-group-item border-0 " style="padding-left:0;" aria-level="1" data-type="folder" data-filename="${folder.basename}" data-id="${folder.id}">
+                                    <i class="state-icon iconSpace">&nbsp;</i>
+                                    <i class="item-icon fa fa-folder"></i>
+                                    <span class="folder">${folder.display_name}</span>
+                                </div>`);
+                            }
+                        }
+                    } else {
+                        if (contextData?.createFolder === "menu") {
+                            reloadData();
+                        } else {
+                            FILEMANAGER_TREE.prepend(`<div class="list-group-item border-0 " style="padding-left:0;" aria-level="0" data-type="folder" data-filename="${folder.basename}" data-id="${folder.id}">
+                                <i class="state-icon iconSpace">&nbsp;</i>
+                                <i class="item-icon fa fa-folder"></i>
+                                <span class="folder">${folder.display_name}</span>
+                            </div>`);
+                        }
+                    }
                 }
 
                 showMessage(data.message, "success", update_id > 0 ? "Renamed" : "Created")
@@ -705,6 +989,7 @@ $(document).ready(function () {
                 FILES_SPINNER.addClass("d-none");
                 ADD_FOLDER_MODAL.modal("hide");
                 hideContextMenu();
+                btn.prop("disabled", false).html(btnHTML);
             }
         });
     })
@@ -727,7 +1012,8 @@ $(document).ready(function () {
     });
 
     let loadingData = false;
-    function reloadData() {
+
+    function reloadData(initial = true) {
         $.ajax({
             url: FM_REQ_URL + "ajax/browse/",
             type: "POST",
@@ -741,7 +1027,11 @@ $(document).ready(function () {
             },
             dataType: "json",
             beforeSend: function () {
-                SPINNER_FULL.removeClass("d-none");
+                if (!initial) {
+                    FILES_SPINNER.removeClass("d-none");
+                } else {
+                    SPINNER_FULL.addClass("show");
+                }
                 loadingData = true;
             },
             success: function (data) {
@@ -753,12 +1043,15 @@ $(document).ready(function () {
                 $(document).find(".filemanager_content_top ol.breadcrumb").html(html);
 
                 //Render Folder and Files
-                if( current_page < 2 ){
+                if (current_page < 2) {
                     FILELISTS_CONTAINER.html("");
                 }
                 renderFolders(data.folders);
                 renderFiles(data.files.data);
                 hasMoreData = data.files.hasMore
+
+                files_list = page === 1 ? data.files.data : [...files_list, ...data.files.data];
+                folders_list = page === 1 ? data.folders : [...folders_list, ...data.folders];
 
                 if (data.folders.length <= 0 && data.files.data.length <= 0) {
                     if (FILELISTS_CONTAINER.find("div").length <= 0) {
@@ -802,12 +1095,13 @@ $(document).ready(function () {
         });
     }
 
-    reloadData();
-    $(window).scroll(function () {
-        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 1000) {
-            if( hasMoreData && !loadingData ){
+    reloadData(true);
+    const filemanager_files = $('#filemanager_files');
+    filemanager_files.scroll(function () {
+        if (filemanager_files.scrollTop() + filemanager_files.height() >= filemanager_files[0].scrollHeight - 1000) {
+            if (hasMoreData && !loadingData) {
                 current_page++;
-                reloadData();
+                reloadData(false);
             }
         }
     });

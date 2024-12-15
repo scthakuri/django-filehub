@@ -1,18 +1,21 @@
+import os
+from typing import LiteralString
+
 from django.db import models
 
-from filehub.settings import EMPTY_FOLDER_SIZE
+from filehub.settings import EMPTY_FOLDER_SIZE, MEDIA_URL, DIRECTORY
+from userauth.models import User
 from django.db.models import Sum, Value, IntegerField
 from django.db.models.functions import Coalesce
 from filehub.core import FolderManager
 from django.core.exceptions import ValidationError
-from django.conf import settings
 
 
 # Create your models here.
 class MediaFolder(models.Model):
     folder_name = models.CharField(max_length=255)
     parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.CASCADE)
-    upload_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    upload_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     upload_date = models.DateTimeField(auto_now_add=True, null=True)
     modify_date = models.DateTimeField(auto_now=True, null=True)
 
@@ -38,6 +41,13 @@ class MediaFolder(models.Model):
         relative_path = relative_path.rstrip('/')
         relative_path = f"{relative_path}/{folder_name}"
         return relative_path
+
+    def get_full_path(self, folder_name=None):
+        """
+        Generate the full path for the MediaFolder instance based on its id.
+        """
+        relative_path = self.get_relative_path(folder_name)
+        return os.path.join(MEDIA_URL, relative_path)
 
     def get_breadcrumb(self):
         """
@@ -68,8 +78,8 @@ class MediaFolder(models.Model):
 
     def delete(self, *args, **kwargs):
         try:
-            super().delete(*args, **kwargs)
             FolderManager.delete_folder(self)
+            super().delete(*args, **kwargs)
         except ValidationError as e:
             print(f"Error deleting MediaFolder instance: {str(e)}")
 
@@ -79,7 +89,9 @@ class MediaFile(models.Model):
     folder = models.ForeignKey(MediaFolder, on_delete=models.CASCADE, null=True, blank=True)
     file_type = models.CharField(max_length=50, blank=True, null=True)
     file_size = models.PositiveIntegerField(default=0, blank=True)
-    upload_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    width = models.PositiveIntegerField(default=0, blank=True)
+    height = models.PositiveIntegerField(default=0, blank=True)
+    upload_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     upload_date = models.DateTimeField(auto_now_add=True, null=True)
     modify_date = models.DateTimeField(auto_now=True, null=True)
 
@@ -92,9 +104,8 @@ class MediaFile(models.Model):
 
         return self.folder.get_relative_path(self.file_name)
 
-    def delete(self, *args, **kwargs):
-        try:
-            super().delete(*args, **kwargs)
-            FolderManager.delete_file(self)
-        except ValidationError as e:
-            print(f"Error deleting MediaFolder instance: {str(e)}")
+    def get_full_path(self) -> LiteralString | str | bytes:
+        if self.folder is None:
+            return os.path.join(MEDIA_URL, self.file_name)
+
+        return self.folder.get_full_path(self.file_name)

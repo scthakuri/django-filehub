@@ -35,16 +35,14 @@
                     </li>
 
                     {% for category, extensions in allowed_exts.items %}
-                        <li>
                         <li class="pb-1">
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="filterBy" id="filterBy{{ category }}"
                                        value="{{ category }}">
                                 <label class="form-check-label" for="filterBy{{ category }}">
-                                    {{ category }}
+                                    {{ category|title }}
                                 </label>
                             </div>
-                        </li>
                         </li>
                     {% endfor %}
 

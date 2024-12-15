@@ -1,11 +1,11 @@
 import os
+import shutil
 
 from filehub.settings import MEDIA_ROOT, FILE_TYPE_CATEGORIES
 from django.db import transaction
 from filehub.utils import get_ext
 from filehub.settings import STATIC_PATH, STATIC_URL
 from urllib.parse import urlparse
-import requests
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 import re
@@ -90,14 +90,14 @@ class FolderManager:
 
     @staticmethod
     @transaction.atomic
-    def delete_folder(model_instance):
+    def delete_folder(model_instance, db_delete=True):
         try:
             # Get the folder path before deleting the model instance
             folder_path = os.path.join(FolderManager.get_media_root(), model_instance.get_relative_path())
 
             # Check if the folder exists before deleting
             if os.path.exists(folder_path):
-                os.rmdir(folder_path)
+                shutil.rmtree(folder_path)
 
         except Exception as e:
             # If an error occurs, roll back the transaction
@@ -105,7 +105,7 @@ class FolderManager:
             raise Exception(f"Error deleting folder: {str(e)}")
 
         # Delete from the database if the folder is deleted successfully
-        if model_instance.id is not None:
+        if model_instance.id is not None and db_delete:
             model_instance.delete()
 
     @staticmethod
@@ -132,11 +132,10 @@ class FolderManager:
 
     @staticmethod
     @transaction.atomic
-    def delete_file(file_instance):
+    def delete_file(file_instance, db_delete=True):
         try:
             # Get the folder path before deleting the model instance
             file_path = os.path.join(FolderManager.get_media_root(), file_instance.get_relative_path())
-            print(f"File Path: {file_path}")
 
             # Check if the folder exists before deleting
             if os.path.exists(file_path):
@@ -148,7 +147,7 @@ class FolderManager:
             raise Exception(f"Error deleting folder: {str(e)}")
 
         # Delete from the database if the folder is deleted successfully
-        if file_instance.id is not None:
+        if file_instance.id is not None and db_delete:
             file_instance.delete()
 
     @staticmethod
@@ -194,6 +193,8 @@ class FolderManager:
     @transaction.atomic
     def upload_url(url, folder_instance, filename=None):
         try:
+            import requests
+
             a = urlparse(url)
 
             file_name = filename if filename else os.path.basename(a.path)
@@ -225,7 +226,7 @@ class FolderManager:
         original_file_name = original_file_name.replace('-', '_')
         original_file_name = re.sub(r'[^\w\s.-]', '', original_file_name)
         original_file_name = re.sub(r'[\[\](){}]', '', original_file_name)
-        return "hm_" + original_file_name + file_extension
+        return original_file_name + file_extension
 
     @staticmethod
     @transaction.atomic
@@ -289,7 +290,11 @@ class FolderManager:
             counter = 1
             while os.path.exists(file_path):
                 file_name = f"{original_file_name}-{counter}{file_extension}"
-                file_path = os.path.join(FolderManager.get_media_root(), file_name)
+                if folder_instance is None:
+                    file_path = os.path.join(FolderManager.get_media_root(), file_name)
+                else:
+                    file_path = os.path.join(FolderManager.get_media_root(),
+                                             folder_instance.get_relative_path(file_name))
                 counter += 1
 
             # Reset file pointer after reading

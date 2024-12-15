@@ -1,0 +1,5 @@
+/.git
+/.idea
+/build
+/dist
+/django_filehub.egg-info

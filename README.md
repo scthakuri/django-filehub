@@ -19,6 +19,13 @@ Install `django_filehub` using `pip`:
 pip install django_filehub
 ```
 
+## Migration
+
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
 ## Configuration
 
 Add the following settings to your Django project's `settings.py`:
@@ -36,19 +43,6 @@ FILE_TYPE_CATEGORIES = {
     'videos': ['mp4', 'webm', 'ogg', 'avi', 'mkv', 'mov', 'wmv', '3gp', 'mpeg', 'mpg4'],
     'musics': ['mp3', 'wav', 'flac', 'aac', 'wma', 'm4a'],
     'archives': ['zip', 'rar', 'tar', 'gz']
-}
-
-# File sorting options
-FILES_SORTING = {
-    "name": "Name",
-    "size": "Size",
-    "date": "Modified"
-}
-
-# Sorting order
-FILES_SORTING_ORDER = {
-    "asc": "Ascending",
-    "desc": "Descending"
 }
 ```
 
