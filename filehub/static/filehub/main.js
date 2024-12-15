@@ -310,9 +310,10 @@ $(document).ready(function () {
                 success: function (response) {
                     const file = response.data;
 
+                    const singleOrMultiple = FM_SELECT_FILE ? FM_SELECT_MULTIPLE ? "checkbox" : "radio" : "checkbox";
                     const newFileElement = $(`<div class="fm-folder border fm-item faimage" data-type="file" data-filetype="child" data-filename="${file.basename}" data-id="${file.id}" data-ext="${file.extension}">
                         <div class="form-check">
-                            <input class="form-check-input fileSelect" name="file_select" data-type="image" type="checkbox">
+                            <input class="form-check-input fileSelect" name="file_select" data-type="image" type="${singleOrMultiple}">
                         </div>
                         <div class="fm-item-thumbnail" style="background-image:url(${file.uri})"></div>
                         <span class="fm-item-title">${file.display_name}</span>
@@ -325,6 +326,7 @@ $(document).ready(function () {
                         FILELISTS_CONTAINER.prepend(newFileElement);
                     }
                     progressBar.removeClass("bg-primary").addClass("bg-success");
+                    files_list.push(file);
                 },
                 error: function () {
                     showMessage(`Unable to upload file: ${file.name}`, "error", "Error");
@@ -847,7 +849,7 @@ $(document).ready(function () {
                     if (indexIDToRemove !== -1) selectedToDeleteFiles.splice(indexIDToRemove, 1);
                 }
             }
-
+            
             updateDeleteButton();
         }
     });

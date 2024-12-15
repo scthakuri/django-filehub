@@ -70,7 +70,8 @@ window.addEventListener("load", function () {
                 width: 900,
                 height: 300,
                 type: 'iframe',
-                autoScale: false
+                autoScale: false,
+                autoSize: false
             });
         }
 
