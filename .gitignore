@@ -8,3 +8,6 @@ fabfile.py
 NOTES.md
 .tox/*
 .flake8
+
+build
+.idea
