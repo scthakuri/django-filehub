@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="django_filehub",
-    version="0.2.7",
+    version="0.2.8",
     author="Suresh Chand",
     author_email="scthakuri12a@gmail.com",
     description="FileHub is a Django-based file management app that simplifies file handling within your Django projects. It supports file uploads, storage, and retrieval, making it easy to integrate robust file management features into your applications.",
