@@ -1,9 +1,11 @@
 import os
-from typing import LiteralString
+from io import BytesIO
 
+from PIL import Image
+from django.conf import settings
+from django.core.files.storage import default_storage
 from django.db import models
-
-from filehub.settings import EMPTY_FOLDER_SIZE, MEDIA_URL, DIRECTORY
+from filehub.settings import EMPTY_FOLDER_SIZE, MEDIA_URL
 from django.db.models import Sum, Value, IntegerField
 from django.db.models.functions import Coalesce
 from filehub.core import FolderManager
@@ -106,8 +108,43 @@ class MediaFile(models.Model):
 
         return self.folder.get_relative_path(self.file_name)
 
-    def get_full_path(self) -> LiteralString | str | bytes:
+    def get_full_path(self) -> str | bytes:
         if self.folder is None:
             return os.path.join(MEDIA_URL, self.file_name)
 
         return self.folder.get_full_path(self.file_name)
+
+    def get_thumbnail_name(self) -> str:
+        return f"{self.id}.jpg"
+
+    def update_image_attributes(self):
+        try:
+            if self.file_type == 'images':
+                file_path = os.path.join(settings.BASE_DIR, self.get_full_path().lstrip('/'))
+                if not os.path.exists(file_path):
+                    print(f"File does not exist: {file_path}")
+                    return
+
+                with Image.open(file_path) as img:
+                    if img.mode != 'RGB':
+                        img = img.convert('RGB')
+
+                    width, height = img.size
+                    self.width = width
+                    self.height = height
+                    self.save()
+
+                    # Generate Thumbnail
+                    img.thumbnail((200, 160))
+                    thumb_io = BytesIO()
+                    img.save(thumb_io, format='JPEG')
+
+                    # Save the thumbnail file to the storage system
+                    thumb_path = FolderManager.get_thumb(self)
+                    os.makedirs(os.path.dirname(thumb_path), exist_ok=True)
+
+                    with default_storage.open(thumb_path, 'wb') as thumb_file_output:
+                        thumb_file_output.write(thumb_io.getvalue())
+                    print(f"Thumbnail generated for #{self.id}")
+        except ValidationError as e:
+            print(f"Error generating thumbnail: {str(e)}")

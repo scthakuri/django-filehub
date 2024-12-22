@@ -1,6 +1,13 @@
 import os
 from django.conf import settings
 
+# Filemanager version
+FILEMANAGER_VERSION = "0.2.7"
+"""
+The version of the file manager application. This version number is displayed
+in the file manager interface and can be used for tracking changes and updates.
+"""
+
 
 # FileHub Login URL
 FILEHUB_LOGIN_URL = getattr(settings, 'FILEHUB_LOGIN_URL', '/admin/')
@@ -104,3 +111,4 @@ FILEHUB_THEME_COLOR = getattr(settings, "FILEHUB_THEME_COLOR", "#009688")
 The primary theme color for the file manager's UI. This color can be customized 
 in the settings by setting `FILEHUB_THEME_COLOR`. The default color is "#009688".
 """
+

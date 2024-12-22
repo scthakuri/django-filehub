@@ -1,7 +1,7 @@
 import os
 import shutil
 
-from filehub.settings import MEDIA_ROOT, FILE_TYPE_CATEGORIES
+from filehub.settings import MEDIA_ROOT, FILE_TYPE_CATEGORIES, MEDIA_URL
 from django.db import transaction
 from filehub.utils import get_ext
 from filehub.settings import STATIC_PATH, STATIC_URL
@@ -23,6 +23,18 @@ class FolderManager:
     @staticmethod
     def get_media_root():
         return MEDIA_ROOT
+
+    @staticmethod
+    def get_thumb(file_instance=None):
+        if file_instance:
+            return os.path.join(MEDIA_ROOT, "thumbs", f"{file_instance.id}.jpg")
+        return os.path.join(MEDIA_ROOT, "thumbs")
+
+    @staticmethod
+    def get_thumb_url(file_instance=None):
+        if file_instance:
+            return os.path.join(MEDIA_URL, "thumbs", f"{file_instance.id}.jpg")
+        return os.path.join(MEDIA_URL, "thumbs")
 
     @staticmethod
     def get_file_category(file_path):
@@ -140,6 +152,11 @@ class FolderManager:
             # Check if the folder exists before deleting
             if os.path.exists(file_path):
                 os.remove(file_path)
+
+            # Also remove thumbnail
+            thumbnail_path = os.path.join(FolderManager.get_media_root(), "thumbs", file_instance.get_thumbnail_name())
+            if os.path.exists(thumbnail_path):
+                os.remove(thumbnail_path)
 
         except Exception as e:
             # If an error occurs, roll back the transaction

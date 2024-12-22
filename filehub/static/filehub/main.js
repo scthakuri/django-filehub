@@ -1,4 +1,10 @@
 $(document).ready(function () {
+    const lazyload = new LazyLoad({
+        callback_error: function (element) {
+            element.innerText = "Unavailable"
+        }
+    });
+
     let sortby = "date", sortorder = "desc", searchvalue = "", filterby = "";
     let filesArray = [];
     let files_list = [];
@@ -175,8 +181,7 @@ $(document).ready(function () {
         const isImage = isValidImage(file.name);
         if (isImage) {
             faicon = "faimage";
-            const getFileURL = file.uri;
-            filePreview = `<div class="fm-item-thumbnail" style="background-image:url(${getFileURL})"></div>`;
+            filePreview = `<div class="fm-item-thumbnail lazy" data-bg="${file.thumbnail}"></div>`;
         } else if (fileExt === 'pdf') {
             filePreview = '<span class="fm-item-thumbnail fas fa-file-pdf"></span>';
         } else if (fileExt === 'doc' || fileExt === 'docx') {
@@ -849,7 +854,7 @@ $(document).ready(function () {
                     if (indexIDToRemove !== -1) selectedToDeleteFiles.splice(indexIDToRemove, 1);
                 }
             }
-            
+
             updateDeleteButton();
         }
     });
@@ -1083,6 +1088,13 @@ $(document).ready(function () {
 
                     openParentIfClosed(reqEle);
                 } catch (error) {
+
+                }
+
+                // Apply lazy load
+                try{
+                    lazyload.update();
+                }catch(error){
 
                 }
             },

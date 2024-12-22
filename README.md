@@ -2,7 +2,7 @@
 
 <p align="center"><img src="https://socialify.git.ci/scthakuri/django-filehub/image?font=Inter&amp;forks=1&amp;issues=1&amp;language=1&amp;name=1&amp;owner=1&amp;pattern=Circuit%20Board&amp;pulls=1&amp;stargazers=1&amp;theme=Light" alt="project-image"></p>
 
-Filehub is a Django-based file management app that simplifies file handling within your Django projects. It supports file uploads, storage, and retrieval, making it easy to integrate robust file management features into your applications.
+FileHub is a Django-based file management app that simplifies file handling within your Django projects. It supports file uploads, storage, and retrieval, making it easy to integrate robust file management features into your applications.
 
 ## Features
 
@@ -180,11 +180,6 @@ if settings.DEBUG:
 ### Serving Media Files in Production
 
 In production, use a web server like **Nginx** or **Apache** to serve media files efficiently. Ensure the `MEDIA_ROOT` directory is properly configured.
-
-## Usage
- - Install and configure the app as described above.
- - Add the necessary `MEDIA_ROOT` and `MEDIA_URL` in your settings.
- - Use `ImagePickerField` and `ImagePickerWidget` in your models and forms for advanced file selection capabilities.
 
 ## Contributing
 Contributions are welcome! If you'd like to report issues, suggest new features, or contribute to the development, please submit a pull request or open an issue.

@@ -1,6 +1,8 @@
 import os.path
+from io import BytesIO
 
 from PIL import Image
+from django.core.files.base import ContentFile
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -9,7 +11,7 @@ from filehub.models import MediaFolder, MediaFile
 from django.shortcuts import render
 from filehub.core import FolderManager
 from filehub.settings import MEDIA_URL, FILES_SORTING, FILES_SORTING_ORDER, FILE_TYPE_CATEGORIES, FILEHUB_LOGIN_URL, \
-    FILEHUB_THEME_COLOR
+    FILEHUB_THEME_COLOR, MEDIA_ROOT
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
@@ -56,7 +58,7 @@ def get_folders(parent_folder=None, sortby="name", sortorder="asc", search=None,
 
 def get_files(page=1, folder=None, sortby="name", sortorder="asc", search=None, filter_by=None, request=None):
     sortorder_prefix = '' if sortorder == 'asc' else '-'
-    items_per_page = 50
+    items_per_page = 49
 
     # Queryset filtering
     all_files = MediaFile.objects.filter(folder=folder)
@@ -362,17 +364,6 @@ def upload_file(request):
                 file_size=file_size,
                 upload_by=request.user
             )
-            file_path = os.path.join(settings.BASE_DIR, media_file.get_full_path())
-            try:
-                if file_type == 'images':
-                    with Image.open(file_path) as img:
-                        width, height = img.size
-                        media_file.width = width
-                        media_file.height = height
-                        media_file.save()
-            except Exception:
-                pass
-
             return JsonResponse({
                 'success': True,
                 'message': 'File uploaded successfully',

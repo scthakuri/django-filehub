@@ -34,10 +34,12 @@
     height: calc(140px - 30px);
     border-top-right-radius: 5px;
     border-top-left-radius: 5px;
-    font-size: 48px;
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;
+    font-size: 15px;
+    color: #ccc;
+    font-style: italic;
 }
 
 .filemanager_files_container .fm-item-title {
@@ -534,12 +536,12 @@ body .right_part .dropdown button {
     font-size: 40px;
 }
 
-body.dragover{
+body.dragover {
     z-index: 9999;
 }
 
 body.dragover .body_dragging {
-    display:flex;
+    display: flex;
 }
 
 @media (max-width: 500px) {

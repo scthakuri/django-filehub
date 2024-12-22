@@ -68,8 +68,16 @@ def file_response_format(file, request):
     """
     Format file response for the API.
     """
+    from filehub.core import FolderManager
+
     file_full_path = file.get_full_path()
     file_name, file_extension = os.path.splitext(file.file_name)
+
+    thumbnail_url = file_full_path
+    thumbnail_path = FolderManager.get_thumb(file)
+    if os.path.exists(thumbnail_path):
+        thumbnail_url = FolderManager.get_thumb_url(file)
+
     file_object = {
         'id': file.id,
         "name": file.file_name,
@@ -83,6 +91,7 @@ def file_response_format(file, request):
         "url": request.build_absolute_uri(file_full_path),
         "uploaded_at": file.upload_date.strftime("%Y-%m-%d %H:%M:%S"),
         "modify_date": file.modify_date.strftime("%Y-%m-%d %H:%M:%S"),
+        "thumbnail": thumbnail_url,
     }
 
     if file.file_type == "images":
