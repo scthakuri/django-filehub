@@ -223,6 +223,23 @@ This command will gather all static files and push them to your S3 bucket under 
 
 For more configuration settings, [check AWS config here](https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html)
 
+#### 5. Filemanager in Tinymce Editor
+
+From v3.0.1, Filemanager can be easily integrate in tinymce editor.
+
+``python
+TINYMCE_DEFAULT_CONFIG = {
+    ...
+    plugins: [... filehub ....],
+    toolbar: [... filehub ....],
+    "external_filemanager_path": "/admin/fm/select/", # Path of your filemanager
+    "filemanager_title": "Filemanager",
+    "external_plugins": {
+        "filehub": "/static/filehub/tinymce/plugin.min.js",
+    },
+}
+```
+
 ### Serving Media Files in Development
 
 During development, you can serve media files by adding the following to your `urls.py`:
