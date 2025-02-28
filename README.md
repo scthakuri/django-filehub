@@ -227,7 +227,7 @@ For more configuration settings, [check AWS config here](https://django-storages
 
 From v3.0.1, Filemanager can be easily integrate in tinymce editor.
 
-``python
+```python
 TINYMCE_DEFAULT_CONFIG = {
     ...
     plugins: [... filehub ....],
