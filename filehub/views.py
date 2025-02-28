@@ -1,8 +1,4 @@
 import os.path
-from io import BytesIO
-
-from PIL import Image
-from django.core.files.base import ContentFile
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -11,12 +7,10 @@ from filehub.models import MediaFolder, MediaFile
 from django.shortcuts import render
 from filehub.core import FolderManager
 from filehub.settings import MEDIA_URL, FILES_SORTING, FILES_SORTING_ORDER, FILE_TYPE_CATEGORIES, FILEHUB_LOGIN_URL, \
-    FILEHUB_THEME_COLOR, MEDIA_ROOT
+    FILEHUB_THEME_COLOR
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
-from django.conf import settings
-
 from filehub.utils import file_response_format, folder_response_format
 
 
@@ -211,10 +205,8 @@ class NewFolderView(View):
 
     def update_folder(self, update_id, name, request):
         try:
-            old_folder = MediaFolder.objects.get(id=update_id)
             folder_to_update = MediaFolder.objects.get(id=update_id)
             folder_to_update.folder_name = name
-            FolderManager.rename_folder(old_folder, folder_to_update)
             folder_to_update.save()
             return JsonResponse({
                 'message': 'Folder renamed successfully.',
@@ -231,9 +223,16 @@ class NewFolderView(View):
         except MediaFolder.DoesNotExist:
             current_dir = None
 
+        exists = MediaFolder.objects.filter(
+            folder_name=name,
+            parent=current_dir
+        ).exists()
+        if exists:
+            raise Exception("Folder already exists")
+
         new_folder_obj = MediaFolder(folder_name=name, parent=current_dir, upload_by=request.user)
-        FolderManager.create_folder(new_folder_obj)
         new_folder_obj.save()
+        FolderManager.create_folder(new_folder_obj)
         return JsonResponse({
             'success': True,
             'message': 'New folder created successfully.',
@@ -356,7 +355,6 @@ def upload_file(request):
 
             (file_size, file_name) = FolderManager.upload_file(file, folder_instance)
             file_type = FolderManager.get_file_category(file_name)
-
             media_file = MediaFile.objects.create(
                 file_name=file_name,
                 folder=folder_instance,
@@ -374,3 +372,5 @@ def upload_file(request):
             return JsonResponse({'success': False, 'error': f"Unexpected error: {str(e)}"}, status=500)
     else:
         return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=500)
+
+

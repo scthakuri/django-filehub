@@ -2,14 +2,14 @@ import os
 from io import BytesIO
 
 from PIL import Image
-from django.conf import settings
 from django.core.files.storage import default_storage
 from django.db import models
-from filehub.settings import EMPTY_FOLDER_SIZE, MEDIA_URL
+from filehub.settings import EMPTY_FOLDER_SIZE
 from django.db.models import Sum, Value, IntegerField
 from django.db.models.functions import Coalesce
 from filehub.core import FolderManager
 from django.core.exceptions import ValidationError
+from django.conf import settings
 
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -30,28 +30,16 @@ class MediaFolder(models.Model):
         """
         Generate the relative file path for the MediaFolder instance based on its id.
         """
-        relative_path = ""
-
-        # If a new folder name is provided, use it for the path
         folder_name = new_folder_name if new_folder_name is not None else ""
-
-        # Traverse the parent hierarchy to build the relative path
-        current_folder = self
-        while current_folder:
-            relative_path = f"{current_folder.folder_name}/{relative_path}"
-            current_folder = current_folder.parent
-
-        # Remove the trailing slash
-        relative_path = relative_path.rstrip('/')
-        relative_path = f"{relative_path}/{folder_name}"
-        return relative_path
+        relative_path = f"{self.id}/{folder_name}"
+        return FolderManager.get_root_directory() + relative_path
 
     def get_full_path(self, folder_name=None):
         """
         Generate the full path for the MediaFolder instance based on its id.
         """
         relative_path = self.get_relative_path(folder_name)
-        return os.path.join(MEDIA_URL, relative_path)
+        return os.path.join(settings.MEDIA_URL, relative_path)
 
     def get_breadcrumb(self):
         """
@@ -72,7 +60,10 @@ class MediaFolder(models.Model):
 
     def get_size(self) -> int:
         total_size = MediaFolder.objects.filter(parent=self).aggregate(
-            size=Coalesce(Sum('mediafile__file_size', default=0), 0, output_field=IntegerField()) + Value(EMPTY_FOLDER_SIZE, output_field=IntegerField())
+            size=Coalesce(
+                Sum('mediafile__file_size', default=0),
+                0, output_field=IntegerField()
+            ) + Value(EMPTY_FOLDER_SIZE, output_field=IntegerField())
         ).get('size', 0)
 
         for child_folder in MediaFolder.objects.filter(parent=self):
@@ -104,47 +95,53 @@ class MediaFile(models.Model):
 
     def get_relative_path(self) -> str:
         if self.folder is None:
-            return self.file_name
-
+            return FolderManager.get_root_directory() + self.file_name
         return self.folder.get_relative_path(self.file_name)
 
     def get_full_path(self) -> str | bytes:
         if self.folder is None:
-            return os.path.join(MEDIA_URL, self.file_name)
-
+            return os.path.join(settings.MEDIA_URL, self.get_relative_path())
         return self.folder.get_full_path(self.file_name)
 
     def get_thumbnail_name(self) -> str:
         return f"{self.id}.jpg"
 
-    def update_image_attributes(self):
+    def update_image_attributes(self, file=None):
         try:
-            if self.file_type == 'images':
-                file_path = os.path.join(settings.BASE_DIR, self.get_full_path().lstrip('/'))
-                if not os.path.exists(file_path):
-                    print(f"File does not exist: {file_path}")
+            if self.file_type == 'image' or self.file_type == 'images':
+                file_path = self.get_relative_path()
+
+                thumb_dir = os.path.join(settings.MEDIA_ROOT, "thumbs")
+                os.makedirs(thumb_dir, exist_ok=True)
+
+                _, extension = os.path.splitext(file_path)
+                thumb_path = os.path.join(thumb_dir, f"{self.id}{extension}")
+
+                if os.path.exists(thumb_path):
+                    print(f"Thumb for #{self.id} already exists.")
                     return
 
-                with Image.open(file_path) as img:
-                    if img.mode != 'RGB':
-                        img = img.convert('RGB')
+                if file:
+                    pillowImage = Image.open(file)
+                else:
+                    try:
+                        default_storage.open(file_path, 'rb')
+                        pillowImage = Image.open(default_storage.open(file_path, 'rb'))
+                    except FileNotFoundError:
+                        print(f"File {file_path} not found. Deleting the object.")
+                        return
 
-                    width, height = img.size
-                    self.width = width
-                    self.height = height
+                if pillowImage:
+                    self.width, self.height = pillowImage.size
                     self.save()
 
-                    # Generate Thumbnail
-                    img.thumbnail((200, 160))
-                    thumb_io = BytesIO()
-                    img.save(thumb_io, format='JPEG')
+                    if pillowImage.mode != 'RGB':
+                        pillowImage = pillowImage.convert('RGB')
 
-                    # Save the thumbnail file to the storage system
-                    thumb_path = FolderManager.get_thumb(self)
-                    os.makedirs(os.path.dirname(thumb_path), exist_ok=True)
+                    pillowImage.thumbnail((200, 160))
 
-                    with default_storage.open(thumb_path, 'wb') as thumb_file_output:
-                        thumb_file_output.write(thumb_io.getvalue())
-                    print(f"Thumbnail generated for #{self.id}")
-        except ValidationError as e:
-            print(f"Error generating thumbnail: {str(e)}")
+                    pillowImage.save(thumb_path)
+                    print(f"Generated thumbnail for {self.id}.")
+
+        except Exception as e:
+            print(f"Error generating thumbnail for {self.id}: {str(e)}\n")

@@ -165,6 +165,64 @@ class ExampleForm(forms.Form):
 
 ## Additional Notes
 
+### Serving Media Files via AWS S3 Buckets
+
+To serve media files via AWS S3 in your Django project, you'll need to configure `django-storages` to handle the interaction with S3.
+
+#### 1. Install django-storages
+
+First, you need to install `django-storages` to manage media files with AWS S3:
+
+```bash
+pip install "django-storages[s3]"
+```
+
+#### 2. Configure AWS S3 in Django Settings
+
+In your `settings.py`, add the following configurations:
+
+```bash
+# AWS S3 Configuration for Serving Media Files
+AWS_ACCESS_KEY_ID = 'your-access-key-id'
+AWS_SECRET_ACCESS_KEY = 'your-secret-access-key'
+AWS_STORAGE_BUCKET_NAME = 'your-bucket-name'
+AWS_S3_REGION_NAME = 'your-region'  # e.g., 'us-east-1'
+AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"  # Customize if using CloudFront
+AWS_S3_FILE_OVERWRITE = False  # Prevent overwriting files with the same name
+AWS_DEFAULT_ACL = 'public-read'  # Files will be publicly accessible
+
+# Optionally, if you want to use a custom URL for your media files:
+AWS_S3_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'  # Adjust if using CloudFront
+```
+
+Make sure to replace placeholders like `'your-access-key-id'`, `'your-secret-access-key'`, and `'your-bucket-name'` with your actual AWS credentials and settings.
+
+#### 3. Set MEDIA_URL (Required) and STATIC_URL (Optional)
+
+Configure the URLs for both static and media files:
+
+```bash
+# URL for serving Media files
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
+
+# URL for serving Static files (Optional)
+STATIC_URL = f'https://{AWS_S3_STATIC_CUSTOM_DOMAIN}/static/'  # Optional
+```
+
+If you do not wish to use a custom `STATIC_URL` and prefer using the default Django static setup, you can skip setting `STATIC_URL`. This is optional.
+
+#### 4. Run collectstatic for Static Files
+
+To upload static files to your S3 bucket, run the following command:
+
+```bash
+python manage.py collectstatic
+```
+
+This command will gather all static files and push them to your S3 bucket under the static/ folder.
+
+For more configuration settings, [check AWS config here](https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html)
+
 ### Serving Media Files in Development
 
 During development, you can serve media files by adding the following to your `urls.py`:

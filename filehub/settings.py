@@ -2,7 +2,7 @@ import os
 from django.conf import settings
 
 # Filemanager version
-FILEMANAGER_VERSION = "0.2.7"
+FILEMANAGER_VERSION = "0.3.0"
 """
 The version of the file manager application. This version number is displayed
 in the file manager interface and can be used for tracking changes and updates.
@@ -23,8 +23,14 @@ The directory where uploaded files are stored. The default value is 'uploads'.
 This directory will be used as a subdirectory within the `MEDIA_ROOT`.
 """
 
+THUMB_DIRECTORY = getattr(settings, 'THUMB_DIRECTORY', 'thumbs')
+"""
+The directory where thumbnail images are stored. The default value is 'thumbs'.
+This directory will be used as a subdirectory within the `MEDIA_ROOT`.
+"""
+
 # Root Path for File Manager Media Files
-MEDIA_ROOT = getattr(settings, "FILEMANAGER_MEDIA_ROOT", os.path.join(settings.MEDIA_ROOT, DIRECTORY))
+MEDIA_ROOT = getattr(settings, "FILEMANAGER_MEDIA_ROOT", DIRECTORY + "/")
 """
 The root directory for media files. It combines `MEDIA_ROOT` from settings 
 with the `FILEMANAGER_DIRECTORY`. The default is `os.path.join(MEDIA_ROOT, 'uploads')`.
@@ -38,7 +44,7 @@ with the `FILEMANAGER_DIRECTORY`. The default is `os.path.join(MEDIA_URL, 'uploa
 """
 
 # File Manager Directory URL
-UPLOAD_DIRECTORY_URL = MEDIA_URL + DIRECTORY + "/"
+UPLOAD_DIRECTORY_URL = MEDIA_URL + "/"
 """
 The complete URL for the file manager directory, constructed from the `MEDIA_URL` 
 and `FILEMANAGER_DIRECTORY`. This URL will be used to access the file manager 

@@ -906,8 +906,8 @@ $(document).ready(function () {
     })
 
     $(document).on("click", ".createNewFolder", function () {
-        const update_id = $(this).data("id");
-        const file_type = $(this).data("type");
+        const update_id = $(this).attr("data-id");
+        const file_type = $(this).attr("data-type");
         const name = $(document).find(".folderNewName").val();
 
         const btn = $(this);

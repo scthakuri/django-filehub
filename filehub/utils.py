@@ -1,5 +1,6 @@
 import os
 import re
+from django.conf import settings
 
 
 def get_ext(filename):
@@ -72,11 +73,10 @@ def file_response_format(file, request):
 
     file_full_path = file.get_full_path()
     file_name, file_extension = os.path.splitext(file.file_name)
-
     thumbnail_url = file_full_path
-    thumbnail_path = FolderManager.get_thumb(file)
-    if os.path.exists(thumbnail_path):
-        thumbnail_url = FolderManager.get_thumb_url(file)
+    if file.file_type == "images" or file.file_type == "image":
+        thumbnail_url = str(os.path.join(settings.MEDIA_ROOT, "thumbs", f"{file.id}{file_extension}"))
+        thumbnail_url = thumbnail_url.replace(str(settings.BASE_DIR), "")
 
     file_object = {
         'id': file.id,
@@ -120,5 +120,29 @@ def folder_response_format(folder, request):
         "modify_date": folder.modify_date.strftime("%Y-%m-%d %H:%M:%S"),
     }
     return folder_object
+
+
+def get_file_type(file_name):
+    """
+    Determine the type of a file based on its extension.
+
+    This function uses the `FILE_TYPE_CATEGORIES` configuration from Django settings
+    to classify files into categories such as 'images', 'videos', 'musics', or 'archives'.
+    If the file's extension does not match any category, it returns 'unknown'.
+
+    Args:
+        file_name (str): The name of the file, including its extension.
+
+    Returns:
+        str: The category of the file ('images', 'videos', 'musics', 'archives', or 'file').
+    """
+    _, ext = os.path.splitext(file_name)
+    ext = ext.lower().lstrip('.')
+    from filehub.settings import FILE_TYPE_CATEGORIES
+
+    for category, extensions in FILE_TYPE_CATEGORIES.items():
+        if ext in extensions:
+            return category
+    return 'file'
 
 

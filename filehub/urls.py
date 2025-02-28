@@ -8,5 +8,5 @@ urlpatterns = [
     path('fm/ajax/browse/', browser_ajax, name='browser_ajax'),
     path('fm/ajax/folder/', NewFolderView.as_view(), name='new_folder'),
     path('fm/ajax/delete/', delete_folder, name='delete_folder'),
-    path('fm/ajax/upload/', upload_file, name='upload'),
+    path('fm/ajax/upload/', upload_file, name='upload')
 ]
