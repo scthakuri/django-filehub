@@ -7,23 +7,23 @@ from django.utils.safestring import mark_safe
 from django.contrib.admin import widgets as admin_widgets
 from django.conf import settings
 
+from filehub.settings import FILEMANAGER_DEBUG
+
 
 class ImagePickerWidget(forms.Textarea):
     """
     A custom widget for selecting images from a file manager.
 
-    This widget renders a textarea for the image URL, and provides a button 
-    that opens a file manager to select an image. Once an image is selected, 
-    the URL is inserted into the textarea. The widget also displays the 
+    This widget renders a textarea for the image URL, and provides a button
+    that opens a file manager to select an image. Once an image is selected,
+    the URL is inserted into the textarea. The widget also displays the
     selected image's name, size, and type (if it's an image).
 
-    The widget uses the `filehub:browser_select` URL for the file manager 
+    The widget uses the `filehub:browser_select` URL for the file manager
     and allows setting a callback function for handling the image selection.
 
     This widget is designed to work with Django's admin and forms framework.
     """
-
-    css_included = False
 
     def use_required_attribute(self, *args):
         # The html required attribute may disturb client-side browser validation.
@@ -41,10 +41,8 @@ class ImagePickerWidget(forms.Textarea):
             "basename": os.path.basename(value) if value else None,
             "file_size": self.get_file_size(value) if value else None,
             "is_image": value and value.endswith((".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp")),
-            "input_field": input_field,
-            "css_included": self.css_included
+            "input_field": input_field
         })
-        self.css_included = True
         return mark_safe(html)
 
     def get_file_size(self, value):
@@ -64,11 +62,14 @@ class ImagePickerWidget(forms.Textarea):
     class Media:
         css = {
             "all": [
-                "https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css"
+                "https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css",
+                f"{settings.STATIC_URL}filehub/widget.min.css" if not FILEMANAGER_DEBUG else
+                f"{settings.STATIC_URL}filehub/widget.css"
             ]
         }
         js = [
             "https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js",
+            f"{settings.STATIC_URL}filehub/widget.min.js" if not FILEMANAGER_DEBUG else
             f"{settings.STATIC_URL}filehub/widget.js"
         ]
 

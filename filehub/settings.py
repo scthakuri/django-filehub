@@ -1,8 +1,16 @@
 import os
 from django.conf import settings
 
+# Filemanager Debug
+FILEMANAGER_DEBUG = False
+"""
+A boolean flag that determines whether the file manager is running in debug mode.
+When set to `True`, the file manager will display additional debug information
+and error messages. This flag should be set to `False` in production environments.
+"""
+
 # Filemanager version
-FILEMANAGER_VERSION = "0.3.0"
+FILEMANAGER_VERSION = "3.1.0"
 """
 The version of the file manager application. This version number is displayed
 in the file manager interface and can be used for tracking changes and updates.

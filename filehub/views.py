@@ -7,7 +7,7 @@ from filehub.models import MediaFolder, MediaFile
 from django.shortcuts import render
 from filehub.core import FolderManager
 from filehub.settings import MEDIA_URL, FILES_SORTING, FILES_SORTING_ORDER, FILE_TYPE_CATEGORIES, FILEHUB_LOGIN_URL, \
-    FILEHUB_THEME_COLOR
+    FILEHUB_THEME_COLOR, FILEMANAGER_DEBUG, FILEMANAGER_VERSION
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
@@ -107,7 +107,9 @@ def browser_view(request):
         "select_files": "true",
         "select_multiple": "true",
         "file_picker": False,
-        "theme_color": FILEHUB_THEME_COLOR
+        "theme_color": FILEHUB_THEME_COLOR,
+        "debug": FILEMANAGER_DEBUG,
+        "version": FILEMANAGER_VERSION
     }
     return render(request, "filehub/filehub_list.html", context=context)
 
@@ -124,7 +126,9 @@ def browser_select(request):
         "select_files": "true",
         "select_multiple": request.GET.get("multiple", "false"),
         "file_picker": True,
-        "theme_color": FILEHUB_THEME_COLOR
+        "theme_color": FILEHUB_THEME_COLOR,
+        "debug": FILEMANAGER_DEBUG,
+        "version": FILEMANAGER_VERSION
     }
     return render(request, "filehub/filehub_list.html", context=context)
 
@@ -347,27 +351,19 @@ def upload_file(request):
             folder_id = request.POST.get('folder_id', None)
             folder_id = folder_id if folder_id else None
 
-            file = request.FILES.get('file')
+            file = request.FILES.get('file', None) or request.POST.get("url", None)
+            if not file:
+                return JsonResponse({'success': False, 'error': 'No file uploaded'}, status=400)
 
             folder_instance = None
             if folder_id is not None:
                 folder_instance = MediaFolder.objects.get(id=folder_id)
-
-            (file_size, file_name) = FolderManager.upload_file(file, folder_instance)
-            file_type = FolderManager.get_file_category(file_name)
-            media_file = MediaFile.objects.create(
-                file_name=file_name,
-                folder=folder_instance,
-                file_type=file_type,
-                file_size=file_size,
-                upload_by=request.user
-            )
+            media_file = FolderManager.upload_to_filemanager(file, folder_instance, request.user)
             return JsonResponse({
                 'success': True,
                 'message': 'File uploaded successfully',
                 'data': file_response_format(media_file, request)
             })
-
         except Exception as e:
             return JsonResponse({'success': False, 'error': f"Unexpected error: {str(e)}"}, status=500)
     else:

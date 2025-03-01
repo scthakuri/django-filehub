@@ -9,10 +9,18 @@
                     <i class="fa-solid fa-home"></i>
                     <span>Home</span>
                 </button>
-                <button type="button" class="btn addNewUpload">
-                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                    <span>Upload</span>
-                </button>
+
+                <div class="dropdown">
+                    <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Upload</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><button class="dropdown-item addNewUpload" type="button">Upload File</button></li>
+                        <li><button class="dropdown-item addNewUrl" type="button">Upload URL</button></li>
+                    </ul>
+                </div>
+
                 <button type="button" class="btn addNewFolder">
                     <i class="fa-solid fa-folder-plus"></i>
                     <span>Add Folder </span>
@@ -29,7 +37,8 @@
     <div class="right_header">
         <form method="get" class="filesSearchForm">
             <div class="input-group">
-                <input type="search" name="s" class="form-control searchFilesInput" placeholder="Search" aria-label="Search">
+                <input type="search" name="s" class="form-control searchFilesInput" placeholder="Search"
+                       aria-label="Search">
             </div>
         </form>
     </div>

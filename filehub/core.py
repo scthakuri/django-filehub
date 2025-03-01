@@ -1,5 +1,9 @@
+import imghdr
 import re
 import os
+from pathlib import Path
+
+from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.db import transaction
@@ -83,6 +87,27 @@ class FolderManager:
             raise Exception(f"Error creating folder: {str(e)}")
 
     @staticmethod
+    @transaction.atomic
+    def create_folder_by_path(folder_path: str, parent_folder=None):
+        """
+        Creates a folder in the storage system if it doesn't exist and saves the folder instance.
+        """
+        try:
+            from filehub.models import MediaFolder
+            folder_path = folder_path.strip("/")
+            folder_path_obj = folder_path.split("/")
+            for folder_name in folder_path_obj:
+                if folder_name:
+                    parent_folder, _ = MediaFolder.objects.get_or_create(
+                        folder_name=folder_name,
+                        parent_folder=parent_folder
+                    )
+            if parent_folder:
+                FolderManager.create_folder(parent_folder)
+        except Exception as e:
+            print(f"Error creating folder: {str(e)}")
+
+    @staticmethod
     def delete_orfan_folder(folder_instance):
         """
         Deletes a folder instance without deleting the folder from the storage system.
@@ -140,30 +165,40 @@ class FolderManager:
         """
         Downloads a file from a URL and uploads it to the storage system.
         """
-        try:
-            import requests
-            a = urlparse(url)
-            file_name = filename if filename else os.path.basename(a.path)
+        import requests
+        a = urlparse(url)
+        file_name = filename if filename else os.path.basename(a.path)
 
-            if folder_instance is None:
-                file_path = file_name
-            else:
-                file_path = os.path.join(folder_instance.get_relative_path(), file_name)
+        if folder_instance:
+            folder_path = folder_instance.get_relative_path()
+        else:
+            folder_path = FolderManager.get_root_directory()
 
-            if FolderManager.is_django_default_storage():
-                full_path = os.path.dirname(os.path.join(main_settings.MEDIA_ROOT, file_path))
-                os.makedirs(full_path, exist_ok=True)
+        if FolderManager.is_django_default_storage():
+            full_path = os.path.join(main_settings.MEDIA_ROOT, folder_path)
+            os.makedirs(full_path, exist_ok=True)
 
-            response = requests.get(url)
-            response.raise_for_status()
-            file_size = int(response.headers.get('Content-Length', 0))
-            image_data = response.content
+        response = requests.get(url)
+        response.raise_for_status()
 
-            default_storage.save(file_path, ContentFile(image_data))
+        image_data = response.content
+        detected_format = imghdr.what(None, h=image_data)
+        extension = f".{detected_format}" if detected_format else ""
 
-            return file_size, file_name
-        except Exception as e:
-            raise Exception(f"Error uploading file: {str(e)}")
+        if extension and not file_name.lower().endswith(extension):
+            file_name += extension
+
+        original_file_name, file_extension = os.path.splitext(file_name)
+        counter = 1
+        file_path = Path(folder_path, file_name)
+        while default_storage.exists(file_path.as_posix()):
+            file_name = f"{original_file_name}-{counter}{file_extension}"
+            file_path = Path(folder_path, file_name)
+            counter += 1
+
+        file_size = int(response.headers.get('Content-Length', 0))
+        default_storage.save(file_path, ContentFile(image_data))
+        return file_size, file_name
 
     @staticmethod
     @transaction.atomic
@@ -184,34 +219,60 @@ class FolderManager:
         """
         Uploads a file to the storage system, checking for existing files and handling naming conflicts.
         """
-        try:
-            original_file_name, file_extension = os.path.splitext(file.name)
-            original_file_name = FolderManager.clean_filename(original_file_name)
-            file_name = original_file_name + file_extension
+        original_file_name, file_extension = os.path.splitext(file.name)
+        original_file_name = FolderManager.clean_filename(original_file_name)
+        file_name = original_file_name + file_extension
 
-            if folder_instance is None:
-                file_path = FolderManager.get_root_directory() + file_name
-            else:
-                file_path = os.path.join(folder_instance.get_relative_path(file_name))
+        if folder_instance:
+            folder_path = folder_instance.get_relative_path()
+        else:
+            folder_path = FolderManager.get_root_directory()
 
-            if FolderManager.is_django_default_storage():
-                full_path = os.path.dirname(os.path.join(main_settings.MEDIA_ROOT, file_path))
-                os.makedirs(full_path, exist_ok=True)
+        if FolderManager.is_django_default_storage():
+            full_path = os.path.join(main_settings.MEDIA_ROOT, folder_path)
+            os.makedirs(full_path, exist_ok=True)
 
-            counter = 1
-            while default_storage.exists(file_path):
-                file_name = f"{original_file_name}-{counter}{file_extension}"
-                file_path = os.path.join(folder_instance.get_relative_path(), file_name) if folder_instance else file_name
-                counter += 1
+        counter = 1
+        file_path = Path(folder_path, file_name)
+        while default_storage.exists(file_path.as_posix()):
+            file_name = f"{original_file_name}-{counter}{file_extension}"
+            file_path = Path(folder_path, file_name)
+            counter += 1
 
-            with default_storage.open(file_path, 'wb+') as destination:
-                for chunk in file.chunks():
-                    destination.write(chunk)
+        with default_storage.open(file_path, 'wb+') as destination:
+            for chunk in file.chunks():
+                destination.write(chunk)
 
-            file_size = file.size
-            return file_size, file_name
-        except Exception as e:
-            raise Exception(f"Error uploading file: {str(e)}")
+        file_size = file.size
+        return file_size, file_name
+
+    @staticmethod
+    @transaction.atomic
+    def upload_to_filemanager(file, folder_instance=None, user=None):
+        """
+        Uploads a file to the storage system and creates a file instance.
+        :param file:
+        :param folder_instance:
+        :return: MediaFile
+        """
+
+        from filehub.models import MediaFile
+
+        if isinstance(file, str):
+            if not file.startswith("http"):
+                raise Exception("Invalid URL")
+            file_size, file_name = FolderManager.upload_url(file, folder_instance)
+        else:
+            file_size, file_name = FolderManager.upload_file(file, folder_instance)
+
+        file_type = FolderManager.get_file_category(file_name)
+        return MediaFile.objects.create(
+            file_name=file_name,
+            folder=folder_instance,
+            file_type=file_type,
+            file_size=file_size,
+            upload_by=user
+        )
 
     @staticmethod
     @transaction.atomic

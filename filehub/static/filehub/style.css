@@ -9,6 +9,7 @@
     background: #fff;
 }
 
+
 .filemanager_files_container {
     display: flex;
     justify-content: flex-start;
@@ -16,6 +17,12 @@
     gap: 15px;
     flex-wrap: wrap;
     padding-bottom: 4rem;
+}
+
+body .btn-toolbar .btn{
+    border:none;
+    background:none;
+    box-shadow: none !important;
 }
 
 .filemanager_files_container .fm-item {
@@ -549,5 +556,16 @@ body.dragover .body_dragging {
         border-width: 2px;
         font-size: 20px;
     }
+}
+
+#tui-image-editor .tui-image-editor-header-logo img {
+    display: none !important;
+}
+
+body .tui-image-editor-container .tui-image-editor-header-buttons button {
+    width: auto;
+    border: none;
+    height: auto;
+    padding: 0 20px;
 }
 

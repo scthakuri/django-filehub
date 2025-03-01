@@ -2,8 +2,20 @@ $(document).ready(function () {
     const lazyload = new LazyLoad({
         callback_error: function (element) {
             element.innerText = "Unavailable"
+            element.setAttribute("style", `background-image: url(${element.getAttribute("data-original")})`);
         }
     });
+
+    const imageEditor = new tui.ImageEditor('#tui-image-editor', {
+        includeUI: {
+            initMenu: "filter",
+            menuBarPosition: "left"
+        }
+    });
+
+    window.onresize = function () {
+        imageEditor.ui.resizeEditor();
+    }
 
     let sortby = "date", sortorder = "desc", searchvalue = "", filterby = "";
     let filesArray = [];
@@ -12,12 +24,6 @@ $(document).ready(function () {
 
     let hasMoreData = false;
     let currentIndex = 0;
-    const clipboard = {
-        'empty': true,
-        'path': 'full path will come here',
-        'mode': 'cut or copy',
-        'type': 'file or dir'
-    };
     let current_directory_id = "";
     let current_page = 1;
     let contextData = {
@@ -25,6 +31,7 @@ $(document).ready(function () {
         type: "folder or file",
         name: "File or Folder Name"
     }
+    let editorObject = contextData;
     let fileUploadedrefresh = false;
     let selectedFiles = [];
     let selectedToDeleteFiles = [];
@@ -45,6 +52,7 @@ $(document).ready(function () {
     const ADD_FOLDER_MODAL = $(document).find("#addFolderModal");
     const FILE_URL_MODAL = $(document).find("#showFileModal");
     const FILE_INFO_MODAL = $(document).find("#infoFileModal");
+    const FILE_UPLOAD_CORNER_NOTI = $(document).find(".file_uloading_corner_notification");
 
     $(document).on("change", "[name=sortingOrder]", function () {
         sortorder = $(this).val();
@@ -181,7 +189,7 @@ $(document).ready(function () {
         const isImage = isValidImage(file.name);
         if (isImage) {
             faicon = "faimage";
-            filePreview = `<div class="fm-item-thumbnail lazy" data-bg="${file.thumbnail}"></div>`;
+            filePreview = `<div class="fm-item-thumbnail lazy" data-original="${file.url}" data-bg="${file.thumbnail}"></div>`;
         } else if (fileExt === 'pdf') {
             filePreview = '<span class="fm-item-thumbnail fas fa-file-pdf"></span>';
         } else if (fileExt === 'doc' || fileExt === 'docx') {
@@ -216,7 +224,7 @@ $(document).ready(function () {
     }
 
     function renderBeadcrumb(folders) {
-        html = '<li class="breadcrumb-item click" data-folder=""><span class="d-flex align-items-center"><i class="fas fa-home me-1"></i> Home</span></li>';
+        let html = '<li class="breadcrumb-item click" data-folder=""><span class="d-flex align-items-center"><i class="fas fa-home me-1"></i> Home</span></li>';
         for (let i = 0; i < folders.length; i++) {
             if (i + 1 >= folders.length) {
                 html += `<li class="breadcrumb-item active"><a>${folders[i].name}</a></li>`;
@@ -272,7 +280,57 @@ $(document).ready(function () {
         }
     }
 
-    const FILE_UPLOAD_CORNER_NOTI = $(document).find(".file_uloading_corner_notification");
+    function handleUploadedFile(file) {
+        const singleOrMultiple = FM_SELECT_FILE ? FM_SELECT_MULTIPLE ? "checkbox" : "radio" : "checkbox";
+        const newFileElement = $(`<div class="fm-folder border fm-item faimage" data-type="file" data-filetype="child" data-filename="${file.basename}" data-id="${file.id}" data-ext="${file.extension}">
+                        <div class="form-check">
+                            <input class="form-check-input fileSelect" name="file_select" data-type="image" type="${singleOrMultiple}">
+                        </div>
+                        <div class="fm-item-thumbnail" style="background-image:url(${file.uri})"></div>
+                        <span class="fm-item-title">${file.display_name}</span>
+                    </div>`);
+
+        const folders = FILELISTS_CONTAINER.find(".fm-folder[data-type=folder]");
+        if (folders.length > 0) {
+            folders.last().after(newFileElement);
+        } else {
+            FILELISTS_CONTAINER.prepend(newFileElement);
+        }
+        files_list.push(file);
+    }
+
+    $(document).on("click", ".finalUploadURL", function () {
+        const modal = $(document).find("#uploadURLModal");
+        const url = modal.find("input").val();
+        if (!isValidHttpUrl(url)) {
+            showMessage("Invalid URL", "error", "Error");
+            return false;
+        }
+
+        const btn = $(this);
+        const btnHtml = btn.html();
+
+        $.ajax({
+            url: FM_REQ_URL + "ajax/upload/",
+            type: 'POST',
+            data: {
+                url: url,
+            },
+            beforeSend: function () {
+                btn.prop("disabled", true).html('<i class="fa fa-spinner fa-spin"></i> Uploading . . .');
+            },
+            success: function (response) {
+                handleUploadedFile(response.data);
+                modal.modal("hide");
+            },
+            error: function () {
+                showMessage(`Unable to upload URL`, "error", "Error");
+            },
+            complete: function(){
+                btn.prop("disabled", false).html(btnHtml);
+            }
+        });
+    })
 
     function handleBodyDragUpload(files) {
         FILE_UPLOAD_CORNER_NOTI.addClass("uploading");
@@ -313,25 +371,8 @@ $(document).ready(function () {
                     return xhr;
                 },
                 success: function (response) {
-                    const file = response.data;
-
-                    const singleOrMultiple = FM_SELECT_FILE ? FM_SELECT_MULTIPLE ? "checkbox" : "radio" : "checkbox";
-                    const newFileElement = $(`<div class="fm-folder border fm-item faimage" data-type="file" data-filetype="child" data-filename="${file.basename}" data-id="${file.id}" data-ext="${file.extension}">
-                        <div class="form-check">
-                            <input class="form-check-input fileSelect" name="file_select" data-type="image" type="${singleOrMultiple}">
-                        </div>
-                        <div class="fm-item-thumbnail" style="background-image:url(${file.uri})"></div>
-                        <span class="fm-item-title">${file.display_name}</span>
-                    </div>`);
-
-                    const folders = FILELISTS_CONTAINER.find(".fm-folder[data-type=folder]");
-                    if (folders.length > 0) {
-                        folders.last().after(newFileElement);
-                    } else {
-                        FILELISTS_CONTAINER.prepend(newFileElement);
-                    }
+                    handleUploadedFile(response.data);
                     progressBar.removeClass("bg-primary").addClass("bg-success");
-                    files_list.push(file);
                 },
                 error: function () {
                     showMessage(`Unable to upload file: ${file.name}`, "error", "Error");
@@ -416,7 +457,7 @@ $(document).ready(function () {
                     </div>
 
                     <div class="progress">
-                        <div class="progress-bar progress-bar-striped bg-primary" role="progressbar" style="width: 0%;" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div class="progress-bar progress-bar-striped bg-primary" role="progressbar" style="width: 0;" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
                 </div>
                 <div class="deleteFile"><i class="fa-solid fa-trash" data-bs-title="Remove File" data-bs-toggle="tooltip"></i></div>
@@ -440,6 +481,23 @@ $(document).ready(function () {
     $(document).on("click", ".addNewUpload", function () {
         $(document).find("#fileUploadModal").modal("show");
     })
+
+    $(document).on("click", ".addNewUrl", function () {
+        $(document).find("#uploadURLModal").find("input").val("");
+        $(document).find("#uploadURLModal").modal("show");
+    })
+
+    function isValidHttpUrl(passedurl) {
+        let url;
+
+        try {
+            url = new URL(passedurl);
+        } catch (_) {
+            return false;
+        }
+
+        return url.protocol === "http:" || url.protocol === "https:";
+    }
 
     $(document).on("click", "#searchBtn", function () {
         reloadData();
@@ -468,7 +526,7 @@ $(document).ready(function () {
         $(document.body).addClass("dragover");
     });
 
-    BODY_DRAGGING_ELE.on('dragleave', function (event) {
+    BODY_DRAGGING_ELE.on('dragleave', function () {
         $(document.body).removeClass('dragover');
     });
 
@@ -521,6 +579,22 @@ $(document).ready(function () {
             name: "",
             type: ""
         }
+    });
+
+    $(document).on("click", ".context_menu .selectall", function () {
+        const fileSelect = $(document).find(".fileSelect");
+        if (fileSelect.length > 0) {
+            if (selectedToDeleteFiles.length > 0) {
+                fileSelect.prop("checked", false).trigger("change");
+                showMessage(`Unselected (${fileSelect.length}) files`, "info", "Unselected");
+            } else {
+                fileSelect.prop("checked", true).trigger("change");
+                showMessage(`Selected (${fileSelect.length}) files`, "info", "Selected");
+            }
+        } else {
+            showMessage("No files to select", "info", "Select");
+        }
+        hideContextMenu();
     });
 
     $(document).on("click", ".context_menu .rename", function () {
@@ -583,6 +657,35 @@ $(document).ready(function () {
         ADD_FOLDER_MODAL.find(".createNewFolder").attr("data-id", "");
         ADD_FOLDER_MODAL.modal("show");
     });
+
+    $(document).on("click", ".context_menu .edit", function () {
+        if (contextData?.category === "images") {
+            editorObject = contextData;
+            const editImageModal = $(document).find("#editImageModal");
+            editImageModal.find(".modal-title").text("Edit Image");
+
+            $(document).find(".tui-image-editor-header-buttons").html(`
+                <button type="button" class="btn btn-secondary ie_saveAsNew">Save Image as New</button>
+                <button type="button" class="btn btn-primary ie_replaceExisting">Replace Existing Image</button>
+            `);
+
+            imageEditor.loadImageFromURL(contextData.url, contextData.name).then(() => {
+                imageEditor.ui.activeMenuEvent();
+                imageEditor.ui.resizeEditor();
+                editImageModal.modal("show");
+            }).catch(() => {
+                showMessage("Unable to load image", "error", "Error");
+            })
+        }
+    });
+
+    $(document).on("click", ".ie_saveAsNew", function () {
+        console.log("Save as new", editorObject)
+    })
+
+    $(document).on("click", ".ie_replaceExisting", function () {
+        console.log("Replace Existing", editorObject)
+    })
 
     $(document).on("click", ".context_menu .open", function () {
         if (contextData.type === 'folder') {
@@ -691,14 +794,14 @@ $(document).ready(function () {
         }
     }
 
-    $(document).on("contextmenu", ".fm-item, .list-group-item", function (e) {
-        e.preventDefault();
-        const fileType = $(this).data("type");
-        const id = $(this).data("id");
+    function handleContextMenuAction(e, $this) {
+        const fileType = $this.data("type") ?? "window";
+        const id = $this.data("id") ?? 0;
+
         contextData = {
             type: fileType,
             id: id,
-            name: $(this).data("filename")
+            name: $this.data("filename") ?? "window"
         }
         if (fileType === "file") {
             const file = files_list.filter((item) => item.id === id);
@@ -707,7 +810,7 @@ $(document).ready(function () {
             } else {
                 return false;
             }
-        } else {
+        } else if (fileType === "folder") {
             const folder = folders_list.filter((item) => item.id === id);
             if (folder.length > 0) {
                 contextData = {...contextData, ...folder[0]};
@@ -716,23 +819,52 @@ $(document).ready(function () {
             }
         }
 
-        if (contextData.type === 'folder') {
+        CONTEXTMENU.find(".dropdown-item").removeClass("d-none");
+        CONTEXTMENU.find(".paste").addClass("d-none");
+
+        if (selectedToDeleteFiles.length > 0) {
+            CONTEXTMENU.find(".selectall").html("<i class=\"fa-solid fa-xmark\"></i> Unselect All");
+        } else {
+            CONTEXTMENU.find(".selectall").html("<i class=\"fa-solid fa-check-double\"></i> Select All");
+        }
+
+        if (fileType === 'folder') {
             CONTEXTMENU.find(".createFolder").removeClass("d-none");
             CONTEXTMENU.find(".showURL").addClass("d-none");
             CONTEXTMENU.find(".download").addClass("d-none");
             CONTEXTMENU.find(".filedivider").addClass("d-none");
-        } else {
+            CONTEXTMENU.find(".edit").addClass("d-none");
+        } else if (fileType === 'file') {
             CONTEXTMENU.find(".createFolder").addClass("d-none");
             CONTEXTMENU.find(".showURL").removeClass("d-none");
             CONTEXTMENU.find(".download").removeClass("d-none");
             CONTEXTMENU.find(".filedivider").removeClass("d-none");
+            if (contextData?.category === "images") {
+                CONTEXTMENU.find(".edit").removeClass("d-none");
+            } else {
+                CONTEXTMENU.find(".edit").addClass("d-none");
+            }
+        } else {
+            CONTEXTMENU.find(".createFolder").removeClass("d-none");
+            CONTEXTMENU.find(".open").addClass("d-none");
+            CONTEXTMENU.find(".rename").addClass("d-none");
+            CONTEXTMENU.find(".edit").addClass("d-none");
+            CONTEXTMENU.find(".download").addClass("d-none");
+            CONTEXTMENU.find(".filedivider").addClass("d-none");
+            CONTEXTMENU.find(".showURL").addClass("d-none");
+
+            if (fileType === "window" && current_directory_id === "") {
+                CONTEXTMENU.find(".delete").addClass("d-none");
+                CONTEXTMENU.find(".info").addClass("d-none");
+                CONTEXTMENU.find(".dropdown-divider").addClass("d-none");
+            }
         }
 
-        if (clipboard['empty']) {
-            CONTEXTMENU.find(".paste").addClass("d-none");
-        } else {
-            CONTEXTMENU.find(".paste").removeClass("d-none");
-        }
+        // if (clipboard['empty']) {
+        //     CONTEXTMENU.find(".paste").addClass("d-none");
+        // } else {
+        //     CONTEXTMENU.find(".paste").removeClass("d-none");
+        // }
 
         CONTEXTMENU.css({
             position: "fixed",
@@ -740,6 +872,17 @@ $(document).ready(function () {
             left: e.pageX,
             top: e.pageY,
         });
+    }
+
+    $(document).on("contextmenu", ".fm-item, .list-group-item", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleContextMenuAction(e, $(this));
+    });
+
+    $(document).on("contextmenu", "#filemanager_sidebar, #filemanager_content", function (e) {
+        e.preventDefault();
+        handleContextMenuAction(e, $(this));
     });
 
     $(document).click(function (e) {
@@ -763,26 +906,6 @@ $(document).ready(function () {
     PREVIEWMODAL[0].addEventListener('hidden.bs.modal', function () {
         PREVIEWMODAL.find(".modal-body").html("");
     })
-
-    function pluginReplySingle(filename) {
-        try {
-            const filePath = FM_MEDIA_URL + filename;
-            const imageData = `<img style="max-width:100%;" class="img-fluid" src='${filePath}' alt='Image'>`;
-            const message = {
-                sender: 'filehub',
-                html: imageData,
-                uri: filePath
-            };
-
-            if (checkhasInQuery("callback_fnc")) {
-                window.parent.onFileHubCallback(message, getFromSearchQuery("callback_fnc"));
-            } else {
-                window.parent.postMessage(message);
-            }
-        } catch (error) {
-            console.log(error);
-        }
-    }
 
     function pluginReplyMultiple() {
         try {
@@ -862,8 +985,11 @@ $(document).ready(function () {
 
     $(document).on("click", ".fm-item[data-type=file]", function (event) {
         if (!$(event.target).is(":checkbox")) {
-            const filename = $(this).data("filename");
-            openFilePreview(filename, $(this).data("id"));
+            // const filename = $(this).find(".fm-item-thumbnail").attr("data-original");
+            // openFilePreview(filename, $(this).data("id"));
+            // If outside the checkox also then also toggle checkbox
+            const checkbox = $(this).find(".fileSelect");
+            checkbox.prop("checked", !checkbox.prop("checked")).trigger("change");
         }
     });
 
@@ -1092,9 +1218,9 @@ $(document).ready(function () {
                 }
 
                 // Apply lazy load
-                try{
+                try {
                     lazyload.update();
-                }catch(error){
+                } catch (error) {
 
                 }
             },
