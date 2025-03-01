@@ -1,7 +1,14 @@
 include LICENSE
 include AUTHORS
 include README.md
+
 recursive-include filehub/templates *
-recursive-include filehub/static *
 recursive-include filehub/templatetags *
 recursive-include filehub/migrations *
+
+# Include only minified CSS and JS from static folder
+recursive-include filehub/static *.min.css *.min.js
+
+# Exclude non-minified CSS and JS files
+prune filehub/static/*.css
+prune filehub/static/*.js

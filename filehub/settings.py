@@ -10,7 +10,7 @@ and error messages. This flag should be set to `False` in production environment
 """
 
 # Filemanager version
-FILEMANAGER_VERSION = "3.1.0"
+FILEMANAGER_VERSION = "3.1.1"
 """
 The version of the file manager application. This version number is displayed
 in the file manager interface and can be used for tracking changes and updates.

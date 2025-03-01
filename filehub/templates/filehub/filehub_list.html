@@ -20,9 +20,9 @@
         }
     </style>
     {% if debug %}
-        <link rel="stylesheet" href="{% static 'filehub/style.css' %}?ver=2.0.0">
+        <link rel="stylesheet" href="{% static 'filehub/style.css' %}?ver={{ version }}">
     {% else %}
-        <link rel="stylesheet" href="{% static 'filehub/style.min.css' %}?ver=2.0.0">
+        <link rel="stylesheet" href="{% static 'filehub/style.min.css' %}?ver={{ version }}">
     {% endif %}
 </head>
 
@@ -76,9 +76,9 @@
 <script src="{% static 'filehub/toast/dist/simple-notify.min.js' %}"></script>
 
 {% if debug %}
-    <script src="{% static 'filehub/main.js' %}?ver=2.1.0"></script>
+    <script src="{% static 'filehub/main.js' %}?ver={{ version }}"></script>
 {% else %}
-    <script src="{% static 'filehub/main.min.js' %}?ver=2.1.0"></script>
+    <script src="{% static 'filehub/main.min.js' %}?ver={{ version }}"></script>
 {% endif %}
 </body>
 </html>
