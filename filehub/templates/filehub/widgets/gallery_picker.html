@@ -1,0 +1,22 @@
+<div class="gallery-widget">
+    <textarea name="{{ widget.name }}" {% include "django/forms/widgets/attrs.html" %}>{{ widget.value }}</textarea>
+
+    <div class="image_picker_container">
+        <div class="empty_placeholder">
+            <a href="{{ widget.filemanager_url }}"
+               class="select_image_url openImagePicker">Select File</a>
+        </div>
+    </div>
+
+    <div class="gallery_image_container">
+        {% for image in widget.object_value %}
+            <div class="gallery_image_item" data-id="{{ image.id }}">
+                <img src="{{ image.url }}" alt="{{ image.name }}"/>
+                <button type="button" class="remove_image_button">
+                    <i class="hgi hgi-stroke hgi-cancel-01"></i>
+                </button>
+                <a class="gallery_image_title" href="{{ image.url }}" target="_blank">{{ image.display_name }}</a>
+            </div>
+        {% endfor %}
+    </div>
+</div>

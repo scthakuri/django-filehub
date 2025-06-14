@@ -1,0 +1,29 @@
+<div class="image_picker_container {% if widget.object_value.url %}added{% endif %}">
+    <textarea name="{{ widget.name }}" {% include "django/forms/widgets/attrs.html" %}>{{ widget.value }}</textarea>
+    <div class="empty_placeholder">
+        <a href="{{ widget.filemanager_url }}" class="select_{{ widget.name }}_url openImagePicker">Select File</a>
+    </div>
+
+    {% if widget.object_value.url %}
+        {% if widget.is_image %}
+            <div class="image_fill_placeholder image mt-2">
+                <span class="hgi hgi-stroke hgi-cancel-01"></span>
+                <img src="{{ widget.object_value.url }}" style="width:auto;max-width:100%;" alt="Preview File"/>
+                <a class="file_image_title" href="{{ widget.object_value.url }}" target="_blank">{{ widget.object_value.display_name }}</a>
+            </div>
+        {% else %}
+            <div class="image_fill_placeholder mt-2"
+                 style="border: 2px solid #eeeeee;border-radius: 10px;padding: 10px;">
+                <span class="hgi hgi-stroke hgi-cancel-01"></span>
+
+                <div class="file_card" style="display: flex;align-items: center;gap: 10px;">
+                    <span class="hgi hgi-stroke hgi-files-02"></span>
+                    <div class="file_info">
+                        <div class="file_name">{{ widget.object_value.name }}</div>
+                        <div class="file_size" style="color:#ccc;">Size: {{ widget.object_value.size }}</div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>

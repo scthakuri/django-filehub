@@ -11,7 +11,7 @@ from filehub.settings import MEDIA_URL, FILES_SORTING, FILES_SORTING_ORDER, FILE
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
-from filehub.utils import file_response_format, folder_response_format
+from filehub.utils import file_response_format, folder_response_format, sanitize_allowed_extensions
 
 
 def get_folder_hierarchy(parent_folder=None):
@@ -109,13 +109,14 @@ def browser_view(request):
         "file_picker": False,
         "theme_color": FILEHUB_THEME_COLOR,
         "debug": FILEMANAGER_DEBUG,
-        "version": FILEMANAGER_VERSION
+        "version": FILEMANAGER_VERSION,
+        "file_exts": []
     }
     return render(request, "filehub/filehub_list.html", context=context)
 
-
 @login_required(login_url=FILEHUB_LOGIN_URL)
 def browser_select(request):
+    file_exts = sanitize_allowed_extensions(request.GET.getlist("file_ext", []))
     context = {
         "media_url": MEDIA_URL,
         "sorting": {
@@ -128,7 +129,8 @@ def browser_select(request):
         "file_picker": True,
         "theme_color": FILEHUB_THEME_COLOR,
         "debug": FILEMANAGER_DEBUG,
-        "version": FILEMANAGER_VERSION
+        "version": FILEMANAGER_VERSION,
+        "file_exts": file_exts
     }
     return render(request, "filehub/filehub_list.html", context=context)
 
@@ -337,7 +339,6 @@ def delete_folder(request):
         except (ValueError, TypeError) as e:
             return JsonResponse({'message': str(e)}, status=500)
         except Exception as e:
-            print(e)
             return JsonResponse({'message': 'Internal server error'}, status=500)
 
     return JsonResponse({'message': 'This request is not available'}, status=500)

@@ -100,10 +100,11 @@ class FolderManager:
                 if folder_name:
                     parent_folder, _ = MediaFolder.objects.get_or_create(
                         folder_name=folder_name,
-                        parent_folder=parent_folder
+                        parent=parent_folder
                     )
             if parent_folder:
                 FolderManager.create_folder(parent_folder)
+            return parent_folder
         except Exception as e:
             print(f"Error creating folder: {str(e)}")
 

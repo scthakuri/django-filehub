@@ -19,10 +19,18 @@
     padding-bottom: 4rem;
 }
 
-body .btn-toolbar .btn{
-    border:none;
-    background:none;
+body .btn-toolbar .btn {
+    border: none;
+    background: none;
     box-shadow: none !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+body .btn-toolbar .btn i {
+    font-size: 20px;
+    line-height: 20px;
 }
 
 .filemanager_files_container .fm-item {
@@ -31,6 +39,10 @@ body .btn-toolbar .btn{
     width: 140px;
     height: 140px;
     border-radius: 5px
+}
+
+.filemanager_files_container .fm-item.disabled{
+    opacity: 70%;
 }
 
 .filemanager_files_container .fm-item-thumbnail {
@@ -44,7 +56,7 @@ body .btn-toolbar .btn{
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;
-    font-size: 15px;
+    font-size: 27px;
     color: #ccc;
     font-style: italic;
 }
@@ -107,6 +119,8 @@ body .btn-toolbar .btn{
 
 #filemanage_container .list-group-item {
     padding: 5px 0;
+    margin-left:-1px;
+    border-radius: 0;
 }
 
 .list-group-item .fa-folder {
@@ -115,6 +129,9 @@ body .btn-toolbar .btn{
 
 .list-group-item {
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .list-group-item .fa-angle-right {
@@ -156,7 +173,7 @@ body .btn-toolbar .btn{
     color: #38424c;
 }
 
-.dropZone .fa-solid {
+.dropZone .hgi {
     font-size: 50px;
     margin-bottom: 1rem;
 }
@@ -252,6 +269,18 @@ body .btn-toolbar .btn{
 
 .context_menu button {
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.context_menu button i {
+    font-size: 20px;
+    line-height: 20px;
+}
+
+.context_menu {
+    max-width: 250px;
 }
 
 .no_files_and_folder_found {
@@ -261,6 +290,7 @@ body .btn-toolbar .btn{
     align-items: center;
     flex-direction: column;
     height: calc(100vh - 120px);
+    color: #8F8F8E;
 }
 
 .no_files_and_folder_found .fa-folder {
@@ -269,9 +299,14 @@ body .btn-toolbar .btn{
 }
 
 .no_files_and_folder_found h3 {
-    font-size: 25px;
-    color: #8F8F8E;
+    font-size: 20px;
     margin-top: 1rem;
+    font-weight: normal;
+}
+
+.no_files_and_folder_found span{
+    font-size:40px;
+    line-height:30px;
 }
 
 .spinner {
@@ -361,7 +396,7 @@ body .btn-toolbar .btn{
 }
 
 .openMenuBar {
-    display: none;
+    display: none !important;
 }
 
 @media (max-width: 766px) {
@@ -387,7 +422,7 @@ body .btn-toolbar .btn{
     }
 
     .openMenuBar {
-        display: block;
+        display: inline-flex !important;
     }
 
     .filemanager_content_top {
@@ -407,7 +442,7 @@ body .btn-toolbar .btn{
 .filemanager_content_top {
     position: sticky;
     top: 0;
-    z-index: 999;
+    z-index: 99;
     background: #fff;
 }
 
@@ -569,3 +604,7 @@ body .tui-image-editor-container .tui-image-editor-header-buttons button {
     padding: 0 20px;
 }
 
+.hgi {
+    font-size: 20px;
+    line-height: 20px;
+}

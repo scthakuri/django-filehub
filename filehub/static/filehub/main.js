@@ -1,7 +1,6 @@
 $(document).ready(function () {
     const lazyload = new LazyLoad({
         callback_error: function (element) {
-            element.innerText = "Unavailable"
             element.setAttribute("style", `background-image: url(${element.getAttribute("data-original")})`);
         }
     });
@@ -139,8 +138,8 @@ $(document).ready(function () {
                         data-fileName="${item.name}"
                         data-id="${item.id}"
                     >
-                        <i class="state-icon fa fa-angle-right fa-fw"></i>
-                        <i class="item-icon fa fa-folder"></i>
+                        <i class="state-icon hgi hgi-stroke hgi-arrow-right-01"></i>
+                        <i class="item-icon hgi hgi-stroke hgi-folder-02"></i>
                         <span class="folder">${item.name}</span>
                     </div>
                     <div role="group" class="list-group collapse" id="tree-item-${item.id}">
@@ -158,7 +157,7 @@ $(document).ready(function () {
                     data-id="${item.id}"
                 >
                     <i class="state-icon iconSpace">&nbsp;</i>
-                    <i class="item-icon fa fa-folder"></i>
+                    <i class="item-icon hgi hgi-stroke hgi-folder-02"></i>
                     <span class="folder">${item.name}</span>
                 </div>`;
             }
@@ -183,7 +182,7 @@ $(document).ready(function () {
 
     function getFileHtml(file) {
         let faicon = "faicon";
-        let filePreview = '<span class="fm-item-thumbnail fas fa-file"></span>';
+        let filePreview = '<span class="fm-item-thumbnail hgi hgi-stroke hgi-file-02"></span>';
 
         const fileExt = getFileExt(file.name);
         const isImage = isValidImage(file.name);
@@ -191,20 +190,21 @@ $(document).ready(function () {
             faicon = "faimage";
             filePreview = `<div class="fm-item-thumbnail lazy" data-original="${file.url}" data-bg="${file.thumbnail}"></div>`;
         } else if (fileExt === 'pdf') {
-            filePreview = '<span class="fm-item-thumbnail fas fa-file-pdf"></span>';
+            filePreview = '<span class="fm-item-thumbnail hgi hgi-stroke hgi-pdf-01"></span>';
         } else if (fileExt === 'doc' || fileExt === 'docx') {
-            filePreview = '<span class="fm-item-thumbnail fas fa-file-word"></span>';
+            filePreview = '<span class="fm-item-thumbnail hgi hgi-stroke hgi-document-attachment"></span>';
         }
 
         let checkboxHTML = '';
-        if (FM_SELECT_FILE) {
+        const canChooseFile = FM_SELECT_FILE && canSelectFile(fileExt);
+        if (canChooseFile) {
             checkboxHTML = `<div class="form-check">
                 <input class="form-check-input fileSelect" name="file_select" data-type="${isImage ? "image" : "file"}" type="${FM_SELECT_MULTIPLE ? 'checkbox' : 'radio'}">
             </div>`;
         }
 
         return `<div 
-            class="fm-folder border fm-item ${faicon}"
+            class="fm-folder border fm-item ${faicon} ${canChooseFile ? '' : 'disabled'}"
             data-type="file"
             data-fileType="child"
             data-fileName="${file.basename}"
@@ -224,7 +224,7 @@ $(document).ready(function () {
     }
 
     function renderBeadcrumb(folders) {
-        let html = '<li class="breadcrumb-item click" data-folder=""><span class="d-flex align-items-center"><i class="fas fa-home me-1"></i> Home</span></li>';
+        let html = '<li class="breadcrumb-item click" data-folder=""><span class="d-flex align-items-center"><i class="hgi hgi-stroke hgi-home-01 me-2"></i> Home</span></li>';
         for (let i = 0; i < folders.length; i++) {
             if (i + 1 >= folders.length) {
                 html += `<li class="breadcrumb-item active"><a>${folders[i].name}</a></li>`;
@@ -236,7 +236,6 @@ $(document).ready(function () {
     }
 
     function renderFolders(folders) {
-
         for (let i = 0; i < folders.length; i++) {
             FILELISTS_CONTAINER.append(`
                 <div 
@@ -246,7 +245,7 @@ $(document).ready(function () {
                     data-fileName="${folders[i].name}"
                     data-id="${folders[i].id}"
                 >
-                    <span class="fm-item-thumbnail fas fa-folder"></span>
+                    <span class="fm-item-thumbnail hgi hgi-stroke hgi-folder-02"></span>
                     <span class="fm-item-title">${folders[i].name}</span>
                 </div>`);
         }
@@ -307,6 +306,7 @@ $(document).ready(function () {
             return false;
         }
 
+
         const btn = $(this);
         const btnHtml = btn.html();
 
@@ -326,7 +326,7 @@ $(document).ready(function () {
             error: function () {
                 showMessage(`Unable to upload URL`, "error", "Error");
             },
-            complete: function(){
+            complete: function () {
                 btn.prop("disabled", false).html(btnHtml);
             }
         });
@@ -423,11 +423,11 @@ $(document).ready(function () {
                 },
                 success: function () {
                     progressBar.removeClass("bg-primary").addClass("bg-success");
-                    deleteFile.html('<i class="fa-solid fa-circle-check text-success" data-bs-title="Upload Successfully" data-bs-toggle="tooltip"></i>');
+                    deleteFile.html('<i class="hgi hgi-stroke hgi-tick-double-04 text-success" data-bs-title="Upload Successfully" data-bs-toggle="tooltip"></i>');
                 },
                 error: function () {
                     progressBar.removeClass("bg-primary").addClass("bg-danger");
-                    deleteFile.html('<i class="fa-solid fa-triangle-exclamation text-danger" data-bs-title="Unable to upload File" data-bs-toggle="tooltip"></i>');
+                    deleteFile.html('<i class="hgi hgi-stroke hgi-alert-01 text-danger" data-bs-title="Unable to upload File" data-bs-toggle="tooltip"></i>');
                     deleteFile.attr("data-index", currentIndex);
                 },
                 complete: function () {
@@ -449,7 +449,9 @@ $(document).ready(function () {
             const file = files[i];
 
             fileEle = $(`<div class="single-file">
-                <div class="fileIcon"><i class="fa-solid fa-file-lines"></i></div>
+                <div class="fileIcon">
+                    <i class="hgi hgi-stroke hgi-file-upload"></i>
+                </div>
                 <div class="info">
                     <div class="d-flex justify-content-between align-items-center w-100 mb-1">
                         <h4 class="name">${file.name}</h4>
@@ -460,7 +462,7 @@ $(document).ready(function () {
                         <div class="progress-bar progress-bar-striped bg-primary" role="progressbar" style="width: 0;" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
                 </div>
-                <div class="deleteFile"><i class="fa-solid fa-trash" data-bs-title="Remove File" data-bs-toggle="tooltip"></i></div>
+                <div class="deleteFile"><i class="hgi hgi-stroke hgi-delete-02" data-bs-title="Remove File" data-bs-toggle="tooltip"></i></div>
             </div>`);
 
             FILELISTS.append(fileEle);
@@ -823,9 +825,9 @@ $(document).ready(function () {
         CONTEXTMENU.find(".paste").addClass("d-none");
 
         if (selectedToDeleteFiles.length > 0) {
-            CONTEXTMENU.find(".selectall").html("<i class=\"fa-solid fa-xmark\"></i> Unselect All");
+            CONTEXTMENU.find(".selectall").html("<i class=\"hgi hgi-stroke hgi-check-unread-02\"></i> Unselect All");
         } else {
-            CONTEXTMENU.find(".selectall").html("<i class=\"fa-solid fa-check-double\"></i> Select All");
+            CONTEXTMENU.find(".selectall").html("<i class=\"hgi hgi-stroke hgi-tick-double-04\"></i> Select All");
         }
 
         if (fileType === 'folder') {
@@ -982,13 +984,19 @@ $(document).ready(function () {
         }
     });
 
+    const canSelectFile = (ext) => {
+        if (FM_SELECT_FILE) {
+            if (FM_SELECT_EXTS_ONLY.length > 0) {
+                return FM_SELECT_EXTS_ONLY.includes(ext);
+            }
+            return true;
+        }
+        return false;
+    }
 
     $(document).on("click", ".fm-item[data-type=file]", function (event) {
-        if (!$(event.target).is(":checkbox")) {
-            // const filename = $(this).find(".fm-item-thumbnail").attr("data-original");
-            // openFilePreview(filename, $(this).data("id"));
-            // If outside the checkox also then also toggle checkbox
-            const checkbox = $(this).find(".fileSelect");
+        const checkbox = $(this).find(".fileSelect");
+        if (!$(event.target).is(":checkbox") && checkbox.length > 0) {
             checkbox.prop("checked", !checkbox.prop("checked")).trigger("change");
         }
     });
@@ -1084,7 +1092,7 @@ $(document).ready(function () {
                             data-fileName="${folder.basename}"
                             data-id="${folder.id}"
                         >
-                            <span class="fm-item-thumbnail fas fa-folder"></span>
+                            <span class="fm-item-thumbnail hgi hgi-stroke hgi-folder-02"></span>
                             <span class="fm-item-title">${folder.display_name}</span>
                         </div>`);
                     folders_list.push(folder);
@@ -1097,7 +1105,7 @@ $(document).ready(function () {
                             if (sideEle.length > 0) {
                                 sideEle.next().prepend(`<div class="list-group-item border-0 " style="padding-left:0;" aria-level="1" data-type="folder" data-filename="${folder.basename}" data-id="${folder.id}">
                                     <i class="state-icon iconSpace">&nbsp;</i>
-                                    <i class="item-icon fa fa-folder"></i>
+                                    <i class="item-icon hgi hgi-stroke hgi-folder-02"></i>
                                     <span class="folder">${folder.display_name}</span>
                                 </div>`);
                             }
@@ -1108,7 +1116,7 @@ $(document).ready(function () {
                         } else {
                             FILEMANAGER_TREE.prepend(`<div class="list-group-item border-0 " style="padding-left:0;" aria-level="0" data-type="folder" data-filename="${folder.basename}" data-id="${folder.id}">
                                 <i class="state-icon iconSpace">&nbsp;</i>
-                                <i class="item-icon fa fa-folder"></i>
+                                <i class="item-icon hgi hgi-stroke hgi-folder-02"></i>
                                 <span class="folder">${folder.display_name}</span>
                             </div>`);
                         }
@@ -1190,12 +1198,12 @@ $(document).ready(function () {
                     if (FILELISTS_CONTAINER.find("div").length <= 0) {
                         if (searchvalue.length > 0) {
                             FILELISTS_CONTAINER.html(`<div class="no_files_and_folder_found">
-                                <span class="fas fa-folder"></span>
+                                <span class="hgi hgi-stroke hgi-folder-02"></span>
                                 <h3>No files and folder found according to your search query.</h3>
                             </div>`);
                         } else {
                             FILELISTS_CONTAINER.html(`<div class="no_files_and_folder_found">
-                                <span class="fas fa-folder"></span>
+                                <span class="hgi hgi-stroke hgi-folder-02"></span>
                                 <h3>This folder is empty</h3>
                             </div>`);
                         }
@@ -1251,3 +1259,4 @@ $(document).ready(function () {
         filemanager_sidebar.toggleClass("d-block");
     });
 });
+

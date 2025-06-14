@@ -2,7 +2,7 @@ import os
 from django.conf import settings
 
 # Filemanager Debug
-FILEMANAGER_DEBUG = False
+FILEMANAGER_DEBUG = True
 """
 A boolean flag that determines whether the file manager is running in debug mode.
 When set to `True`, the file manager will display additional debug information
@@ -10,7 +10,7 @@ and error messages. This flag should be set to `False` in production environment
 """
 
 # Filemanager version
-FILEMANAGER_VERSION = "3.1.1"
+FILEMANAGER_VERSION = "3.1.6"
 """
 The version of the file manager application. This version number is displayed
 in the file manager interface and can be used for tracking changes and updates.
@@ -64,7 +64,8 @@ FILE_TYPE_CATEGORIES = getattr(settings, "FILE_TYPE_CATEGORIES", {
     'images': ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp'],
     'videos': ['mp4', 'webm', 'ogg', 'avi', 'mkv', 'mov', 'wmv', '3gp', 'mpeg', 'mpg4'],
     'musics': ['mp3', 'wav', 'flac', 'aac', 'wma', 'm4a', 'wma'],
-    'archives': ['zip', 'rar', 'tar', 'gz']
+    'archives': ['zip', 'rar', 'tar', 'gz'],
+    'documents': ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv', 'odt', 'ods'],
 })
 """
 A dictionary that defines the categories of file types allowed in the file manager.

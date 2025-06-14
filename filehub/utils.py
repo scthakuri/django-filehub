@@ -146,3 +146,32 @@ def get_file_type(file_name):
     return 'file'
 
 
+def sanitize_allowed_extensions(allowed_extensions):
+    """
+    Sanitize a list of allowed file extensions by splitting comma-separated strings,
+    removing duplicates, trimming whitespace, and converting to lowercase.
+
+    Args:
+        allowed_extensions (list): A list of file extensions or comma-separated strings.
+
+    Returns:
+        list: A sanitized, sorted list of unique lowercase file extensions.
+    """
+    if not isinstance(allowed_extensions, list):
+        raise ValueError("allowed_extensions must be a list")
+
+    sanitized = set()
+    for ext in allowed_extensions:
+        if not ext:
+            continue
+        for part in str(ext).split(","):
+            cleaned = part.strip().lower()
+            if cleaned:
+                sanitized.add(cleaned)
+
+    return sorted(sanitized)
+
+
+
+
+

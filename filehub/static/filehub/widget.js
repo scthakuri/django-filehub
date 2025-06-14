@@ -1,18 +1,97 @@
 window.addEventListener("load", function () {
-    (function ($) {
-        function formatSize(size) {
-            const kilobyte = 1024;
-            const megabyte = kilobyte * 1024;
-            const gigabyte = megabyte * 1024;
+    function formatSize(size) {
+        const kilobyte = 1024;
+        const megabyte = kilobyte * 1024;
+        const gigabyte = megabyte * 1024;
 
-            if (size >= gigabyte) {
-                return (size / gigabyte).toFixed(2) + ' GB';
-            } else if (size >= megabyte) {
-                return (size / megabyte).toFixed(2) + ' MB';
-            } else if (size >= kilobyte) {
-                return (size / kilobyte).toFixed(2) + ' KB';
+        if (size >= gigabyte) return (size / gigabyte).toFixed(2) + ' GB';
+        if (size >= megabyte) return (size / megabyte).toFixed(2) + ' MB';
+        if (size >= kilobyte) return (size / kilobyte).toFixed(2) + ' KB';
+        return size + ' bytes';
+    }
+
+    const getGalleryWidgetValue = (galleryWidget) => {
+        try {
+            return JSON.parse(galleryWidget.val()) || []
+        } catch {
+            return [];
+        }
+    }
+
+    function formatFilePickerValue(v) {
+        return {
+            id: parseInt(v.id),
+            name: v.name,
+            display_name: v.display_name,
+            size: v.size,
+            width: v.width,
+            height: v.height,
+            url: v.url
+        }
+    }
+
+    function appendValueToTextarea(ele, values) {
+        let currentValue = getGalleryWidgetValue(ele);
+        const filterValues = values.map(v => formatFilePickerValue(v));
+
+        const merged = [...currentValue, ...filterValues];
+        const uniqueById = Array.from(new Map(merged.map(item => [item.id, item])).values());
+        ele.val(JSON.stringify(uniqueById)).trigger("change");
+        ele[0].dispatchEvent(new Event("change", {bubbles: true}));
+    }
+
+    function initializeFilehubWidget($) {
+        $.fn.hasAttr = function (name) {
+            return this.attr(name) !== undefined;
+        };
+
+        function initializeGallerySortable(ele) {
+            if (ele.parent().find(".gallery-picker").hasAttr("sortable")) {
+                new Sortable(ele[0], {
+                    animation: 150,
+                    ghostClass: 'blue-background-class',
+                    onChange: function (event) {
+                        const targetEle = $(event.item).closest(".gallery_image_container");
+                        const galleryWidget = targetEle.closest(".gallery-widget");
+                        const galleryPicker = galleryWidget.find(".gallery-picker");
+                        const galleryValue = getGalleryWidgetValue(galleryPicker);
+                        const orderIds = targetEle.find(".gallery_image_item").map(function () {
+                            return parseInt($(this).attr("data-id"));
+                        }).get();
+                        const orderedGalleryValue = orderIds
+                            .map(id => galleryValue.find(item => item.id === id))
+                            .filter(item => item !== undefined);
+                        galleryPicker.val(JSON.stringify(orderedGalleryValue));
+                    }
+                });
+            }
+        }
+
+        function renderFilePreview(container, selectedFile, appendTitle=false) {
+            container.addClass("added");
+            container.find(".image_fill_placeholder").remove();
+
+            if (selectedFile.category === "images") {
+                container.append(`
+                    <div class="image_fill_placeholder image mt-2">
+                        <i class="hgi hgi-stroke hgi-cancel-01"></i>
+                        <img src="${selectedFile.uri}" style="width:auto;max-width:100%;" alt="Preview File"/>
+                        ${appendTitle && `<a class="file_image_title" href="${selectedFile.url}" target="_blank">${selectedFile.display_name}</a>`}
+                    </div>
+                `);
             } else {
-                return size + ' bytes';
+                container.append(`
+                    <div class="image_fill_placeholder mt-2" style="border: 2px solid #eeeeee;border-radius: 10px;padding: 10px;">
+                        <span class="hgi hgi-stroke hgi-cancel-01"></span>
+                        <div class="file_card" style="display: flex;align-items: center;gap: 10px;">
+                            <span class="hgi hgi-stroke hgi-files-02"></span>
+                            <div class="file_info">
+                                <div class="file_name">${selectedFile.name}</div>
+                                <div class="file_size" style="color:#ccc;">Size: ${formatSize(selectedFile.size) || 'Unknown'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `);
             }
         }
 
@@ -20,66 +99,129 @@ window.addEventListener("load", function () {
             try {
                 const selectedFile = selectedObj.file;
                 const findImageEle = $(document).find(`[name="${id}"]`);
-                if (findImageEle.length > 0) {
+
+                const isGallery = findImageEle.hasClass("gallery-picker");
+                const isFilePicker = findImageEle.hasClass("file-picker");
+                if (isGallery) {
+                    appendValueToTextarea(findImageEle, selectedObj.files);
+                } else if (isFilePicker) {
+                    findImageEle.val(JSON.stringify(formatFilePickerValue(selectedObj.file))).trigger("change");
+                    $(document).trigger("file_selected", [selectedFile, id]);
+                    const container = findImageEle.closest(".image_picker_container");
+                    if (container.length) {
+                        renderFilePreview(container, selectedFile, true);
+                    }
+                } else if (findImageEle.length) {
                     findImageEle.val(selectedFile.uri).trigger("change");
+                    $(document).trigger("file_selected", [selectedFile, id]);
 
                     const container = findImageEle.closest(".image_picker_container");
-                    if (container) {
-                        container.addClass("added");
-                        container.find(".image_fill_placeholder").remove();
-
-                        if (selectedFile.category === "images") {
-                            container.append(`
-                                    <div class="image_fill_placeholder mt-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512">
-                                            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" 
-                                                  stroke-width="32" d="M368 368L144 144M368 144L144 368"></path>
-                                        </svg>
-                                        <img src="${selectedFile.uri}" style="width:auto;max-width:100%;" alt="Preview File"/>
-                                    </div>
-                                `);
-                        } else {
-                            container.append(`
-                                    <div class="image_fill_placeholder mt-2" style="border: 2px solid #eeeeee;border-radius: 10px;padding: 10px;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512">
-                                            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" 
-                                                  stroke-width="32" d="M368 368L144 144M368 144L144 368"></path>
-                                        </svg>
-                                        
-                                        <div class="file_card" style="display: flex;align-items: center;gap: 10px;">
-                                            <img style="width:50px;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAACx0lEQVR4nO2bu2sVQRTGfzHgg2gaG41YmitYirGwFgTFFDYWuQFRY2HjK/ioJFhEbQQhGAOCCP4BaqcWtoqFiFWuNiqIYHwWBgNXBubCYVjjZvfM7sy988HhLlz2O+d8O68zuwPVYwAYBc4A55VtAthOoOgDJoFvQNuzPQUaBIRVwP0KEpf2FRghEEw6wbWAWWBa0a4DD4E/ws9HYEPdyQ84zX4OWOPRn3nqC8LfRWrGQRHMvOfkOzgufL6oaoA7BBy21xJnRTC3qggGGBI+f/h2thq4KxyOO/9fFv+Z66ogxxxv2Ag8c5wd7RUBhm2flo5u2imv6wXYA3wWDpbsSiwLXSfAEWBRkP+yIz3dLkCfk0xnobHzP/d1hQBrM5ayr4CtOe6NXoBNwHOH8AGwPuf9UQswCLxxyG4A/SvgiFqAK85If7IAR9QCzAuSEwU5ZgWH2QSJSoDfgsR0hyKD5zvBsZ/IBPggSPYVSP6OuN+UqOuITIAZZ8Ezk3Nv7rbz5I2dolqoCDAEfFpm2ymv3csok6NZB+wAXhdMfME++aqTV18J9gN77d5env2508CBivt85eVw6EgCkFoAqQtQcgy4Zuf/q/RoF1i0BOa3JwVoFyAxm6JND29+mxkbrtqxq5CMK6wc/2VGhOAFaHoUYMxz7GpdYEz5ze+05YyiC4SCJACpBZC6ADWMAcMZu0Ea9hbY5jl2FZJzHqdB87FFFC2g5SH5ViwtIBQkAUgtgNQFqKkWaKZyGC/TYCqH8dt61bpAKocDQJoGSdMgaR1AqgVIxRB1j6Q1IQ2CKDy8n4JkM/Fgi4j7exmil4LoGPFgQuvQ1CVB9CWkg4jLYLdzbO5CGbJBeyagQ2YOJT4CpjyUu2Vtysa2JOJ9r3FwcsQeQ21HZibmXSihATwJIKm89tjuTqujYU9lms/etd/+ljUTk4ltRYn/BZi9S5cZIajtAAAAAElFTkSuQmCC" alt="File Icon" />
-                                            <div class="file_info">
-                                                <div class="file_name">${selectedFile.display_name}</div>
-                                                <div class="file_size" style="color:#ccc;">Size: ${formatSize(selectedFile.size) || 'Unknown'}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                `);
-                        }
+                    if (container.length) {
+                        renderFilePreview(container, selectedFile);
                     }
                 }
-            } catch (error) {
-                console.log(error);
+            } catch {
             }
-            $.fancybox.close();
+            try {
+                jQuery.fancybox.close();
+            } catch {
+            }
+            try {
+                $.fancybox.close();
+            } catch {
+            }
         };
 
-        const fancyboxfile = $(document).find(".openImagePicker");
-        if (fancyboxfile.length > 0) {
-            fancyboxfile.fancybox({
-                width: 900,
-                height: 300,
-                type: 'iframe',
-                autoScale: false,
-                autoSize: false
-            });
+        const fancyboxfile = $(".openImagePicker");
+        if (fancyboxfile.length) {
+            try {
+                fancyboxfile.fancybox({
+                    width: 900,
+                    height: 300,
+                    type: 'iframe',
+                    autoScale: false,
+                    autoSize: false
+                });
+            } catch {
+            }
         }
 
-        $(document).on("click", ".image_picker_container svg", function () {
+        $(document).on("click", ".image_picker_container .hgi-cancel-01", function () {
             const container = $(this).closest(".image_picker_container");
             container.removeClass("added");
             container.find(".image_fill_placeholder").remove();
-            container.find("input,textarea").val("");
+            container.find("input,textarea").each(function () {
+                $(this).val($(this).hasClass("file-picker") ? "{}" : "");
+            })
         });
+
+        $(document).find(".gallery_image_container").each(function () {
+            initializeGallerySortable($(this));
+        })
+
+        $(document).on("click", ".remove_image_button", function () {
+            const galleryWidget = $(this).closest(".gallery-widget");
+            const gallery_image_item = $(this).closest(".gallery_image_item");
+            const removeId = gallery_image_item.attr("data-id");
+
+            gallery_image_item.remove();
+
+            const galleryPicker = galleryWidget.find(".gallery-picker");
+            const values = getGalleryWidgetValue(galleryPicker);
+            const updatedValues = values.filter(file => String(file.id) !== removeId);
+
+            galleryPicker.val(JSON.stringify(updatedValues)).trigger("change");
+        })
+
+        function galleryLimiCheck(ele) {
+            ele.each(function () {
+                let currentValue = getGalleryWidgetValue(ele);
+                const maxItems = $(this).attr("data-max-items");
+                if (maxItems && currentValue.length >= parseInt(maxItems)) {
+                    $(this).closest(".gallery-widget").addClass("limit_reached");
+                } else {
+                    $(this).closest(".gallery-widget").removeClass("limit_reached");
+                }
+            })
+        }
+
+        $(document).on("change", ".gallery-picker", function () {
+            let currentValue = getGalleryWidgetValue($(this));
+
+            const galleryContainer = $(this).closest(".gallery-widget").find(".gallery_image_container");
+            if (galleryContainer.length > 0) {
+                galleryContainer.empty();
+                currentValue.forEach(file => {
+                    galleryContainer.append(`<div class="gallery_image_item" data-id="${file.id}">
+                    <img src="${file.url}" alt="${file.display_name}">
+                    <button type="button" class="remove_image_button">
+                        <i class="hgi hgi-stroke hgi-cancel-01"></i>
+                    </button>
+                    <a href="${file.url}" target="_blank" class="gallery_image_title">${file.display_name}</a>
+                </div>`)
+                })
+                initializeGallerySortable(galleryContainer);
+            }
+
+            const galleryWidget = galleryContainer.closest(".gallery-widget");
+            if (galleryWidget.length > 0) {
+                galleryWidget.addClass("added");
+            } else {
+                galleryWidget.removeClass("added");
+            }
+
+            galleryLimiCheck($(this));
+        });
+
+        galleryLimiCheck($(document).find(".gallery-picker"));
+    }
+
+    (function ($) {
+        initializeFilehubWidget($);
+    })(jQuery);
+
+    (function ($) {
+        initializeFilehubWidget($);
     })(django.jQuery);
 });
+

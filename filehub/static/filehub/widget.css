@@ -27,26 +27,18 @@ body .image_picker_container.added .empty_placeholder {
     display: none !important;
 }
 
-body .image_fill_placeholder i {
-    position: absolute;
-    background: red;
-    color: #fff;
-    width: 25px;
-    height: 25px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 100%;
-    right: 10px;
-    top: 10px;
-    cursor: pointer;
+body .image_fill_placeholder.image {
+    position: relative;
+    max-width: 300px;
+    height: 200px;
 }
 
-body .image_fill_placeholder img {
+body .image_fill_placeholder.image img {
     width: 100%;
-    max-height: 300px;
+    height: 100%;
     object-fit: cover;
     object-position: top;
+    border-radius: 5px;
 }
 
 .image_picker_container input,
@@ -58,7 +50,7 @@ body .image_picker_container {
     position: relative;
 }
 
-body .image_fill_placeholder svg {
+body .image_fill_placeholder span.hgi-cancel-01 {
     position: absolute;
     background: red;
     color: #fff;
@@ -71,8 +63,83 @@ body .image_fill_placeholder svg {
     right: 10px;
     top: 10px;
     cursor: pointer;
+    z-index: 9999;
 }
 
 body .fancybox-content {
     max-height: 85vh !important;
+}
+
+.gallery_image_container .gallery_image_item {
+    position: relative;
+    width: 200px;
+    height: 150px;
+}
+
+.gallery_image_container {
+    display: flex;
+    align-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+}
+
+.gallery_image_container .gallery_image_item button {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    z-index: 9999;
+    background: red;
+    border: none;
+    color: #fff;
+    border-radius: 100%;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-items: center;
+}
+
+.gallery_image_container .gallery_image_item button i {
+    margin-left: 2px;
+}
+
+.gallery_image_container .gallery_image_item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    border-radius: 5px;
+}
+
+.gallery_image_container .gallery_image_title,
+body .file_image_title{
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    color: #fff;
+    font-size: 14px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+    box-sizing: border-box;
+    top: 0;
+    right: 0;
+    padding: 5px;
+    z-index: 999;
+    border-radius: 5px;
+}
+
+.gallery-widget.limit_reached .image_picker_container{
+    display: none !important;
+}
+
+.gallery-widget textarea {
+    display: none !important;
+}
+
+.file_card span.hgi-files-02{
+    font-size: 40px;
 }
