@@ -30,7 +30,11 @@ def get_folder_hierarchy(parent_folder=None):
 
 def get_folders(parent_folder=None, sortby="name", sortorder="asc", search=None, request=None):
     sortorderFinal = '' if sortorder == 'asc' else '-'
-    folders = MediaFolder.objects.filter(parent=parent_folder)
+
+    if request and hasattr(request, 'user') and request.user.is_authenticated:
+        folders = MediaFolder.get_accessible_folders(request.user, parent_folder)
+    else:
+        folders = MediaFolder.objects.filter(parent=parent_folder)
 
     if search is not None:
         folders = folders.filter(Q(folder_name__icontains=search))
@@ -47,6 +51,8 @@ def get_folders(parent_folder=None, sortby="name", sortorder="asc", search=None,
     if sortby == 'size':
         output = sorted(output, key=lambda x: x['size'], reverse=(sortorder == 'desc'))
 
+    print(output)
+
     return output
 
 
@@ -54,8 +60,10 @@ def get_files(page=1, folder=None, sortby="name", sortorder="asc", search=None, 
     sortorder_prefix = '' if sortorder == 'asc' else '-'
     items_per_page = 49
 
-    # Queryset filtering
-    all_files = MediaFile.objects.filter(folder=folder)
+    if request and hasattr(request, 'user') and request.user.is_authenticated:
+        all_files = MediaFile.get_accessible_files(request.user, folder)
+    else:
+        all_files = MediaFile.objects.filter(folder=folder)
 
     if filter_by:
         all_files = all_files.filter(file_type=filter_by)
@@ -180,8 +188,8 @@ def browser_ajax(request):
 
         except (ValueError, TypeError) as e:
             return JsonResponse({'message': str(e)}, status=500)
-        except Exception:
-            return JsonResponse({'message': 'Internal server error'}, status=500)
+        except Exception as e:
+            return JsonResponse({'message': 'Internal server error', 'error': e}, status=500)
 
     return JsonResponse({'message': 'This request is not available'}, status=500)
 

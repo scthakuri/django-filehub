@@ -4,6 +4,8 @@ from io import BytesIO
 from PIL import Image
 from django.core.files.storage import default_storage
 from django.db import models
+
+import filehub.settings
 from filehub.settings import EMPTY_FOLDER_SIZE
 from django.db.models import Sum, Value, IntegerField
 from django.db.models.functions import Coalesce
@@ -78,6 +80,29 @@ class MediaFolder(models.Model):
         except ValidationError as e:
             print(f"Error deleting MediaFolder instance: {str(e)}")
 
+    @classmethod
+    def get_accessible_folders(cls, user, parent_folder=None):
+        """Get folders accessible to the user based on settings"""
+        access_mode = filehub.settings.FILEHUB_ACCESS_MODE
+
+        folders = cls.objects.filter(parent=parent_folder)
+
+        if access_mode == 'own':
+            folders = folders.filter(upload_by=user)
+
+        elif access_mode == 'role_based':
+            role_field = filehub.settings.FILEHUB_ROLE_FIELD
+            if hasattr(user, role_field):
+                user_role = getattr(user, role_field)
+                folders = folders.filter(**{f'upload_by__{role_field}': user_role})
+            else:
+                folders = folders.filter(upload_by=user)
+        elif access_mode == 'all':
+            pass
+
+        return folders
+
+
 
 class MediaFile(models.Model):
     file_name = models.CharField(max_length=255)
@@ -92,6 +117,28 @@ class MediaFile(models.Model):
 
     def __str__(self) -> str:
         return self.file_name
+
+    @classmethod
+    def get_accessible_files(cls, user, folder=None):
+        access_mode = filehub.settings.FILEHUB_ACCESS_MODE
+
+        files = cls.objects.filter(folder=folder)
+
+        if access_mode == 'own':
+            files = files.filter(upload_by=user)
+
+        elif access_mode == 'role_based':
+            role_field = filehub.settings.FILEHUB_ROLE_FIELD
+            if hasattr(user, role_field):
+                user_role = getattr(user, role_field)
+                files = files.filter(**{f'upload_by__{role_field}': user_role})
+            else:
+                files = files.filter(upload_by=user)
+
+        elif access_mode == 'all':
+            pass
+
+        return files
 
     def get_relative_path(self) -> str:
         if self.folder is None:

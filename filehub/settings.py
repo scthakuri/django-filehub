@@ -10,7 +10,7 @@ and error messages. This flag should be set to `False` in production environment
 """
 
 # Filemanager version
-FILEMANAGER_VERSION = "3.1.6"
+FILEMANAGER_VERSION = "3.1.8"
 """
 The version of the file manager application. This version number is displayed
 in the file manager interface and can be used for tracking changes and updates.
@@ -126,4 +126,8 @@ FILEHUB_THEME_COLOR = getattr(settings, "FILEHUB_THEME_COLOR", "#009688")
 The primary theme color for the file manager's UI. This color can be customized 
 in the settings by setting `FILEHUB_THEME_COLOR`. The default color is "#009688".
 """
+
+# File Manager Access Settings
+FILEHUB_ACCESS_MODE = getattr(settings, "FILEHUB_ACCESS_MODE", 'all')  # Options: 'own', 'role_based', 'all'
+FILEHUB_ROLE_FIELD = getattr(settings, "FILEHUB_ROLE_FIELD", 'role')  # Field name in the role model that contains the role value
 

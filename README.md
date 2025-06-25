@@ -127,7 +127,51 @@ FILEHUB_THEME_COLOR = "#3498db"
 
 Django Filehub also supports the following custom field and widget for advanced image selection:
 
-### 1. **ImagePickerField**
+### 1. **FilePickerField**
+
+`FilePickerField` is a custom Django model field used to store a selected file (with metadata) in JSON format. It provides support for file type categories (e.g., images, videos, archives) and file extension restrictions.
+
+#### Example Usage:
+
+```python
+from filehub.fields import FilePickerField
+
+class Document(models.Model):
+    file = FilePickerField(file_type=['images', 'archives'], file_ext=['pdf'])
+```
+
+* **Description**:
+
+  * Stores a single file (typically as a JSON object with metadata like name, size, type, etc.).
+  * Supports validation using `file_type` (mapped to categories like images, videos, etc.) and `file_ext`.
+  * Automatically warns if unsupported attributes like `max_length` are used.
+  * Ideal for selecting or linking externally uploaded files with validation logic.
+
+---
+
+### 2. **GalleryPickerField**
+
+`GalleryPickerField` is a custom Django model field used to store a gallery of selected files (typically images) as a list of JSON objects.
+
+#### Example Usage:
+
+```python
+from filehub.fields import GalleryPickerField
+
+class Album(models.Model):
+    gallery = GalleryPickerField(min_items=2, max_items=5, sortable=True)
+```
+
+* **Description**:
+
+  * Stores multiple files (usually images) as a JSON array.
+  * Each entry in the array represents a file with metadata.
+  * Supports file type categories and file extension filtering similar to `FilePickerField`.
+  * Best suited for image galleries, multi-file selection, or grouped file displays.
+
+
+
+### 3. **ImagePickerField**
 
 `ImagePickerField` is a custom Django model field used to store image file paths as text. This field makes it easier to handle image selections by allowing you to store the image path in your model without the need for manually handling file uploads.
 
@@ -145,7 +189,7 @@ class ExampleModel(models.Model):
     - It does not directly handle the image upload process; rather, it works with an image picker interface that allows the user to choose images.
     - This is particularly useful when you want to allow users to select images from a pre-defined set or directory rather than uploading new images each time.
 
-### 2. **ImagePickerWidget**
+### 4. **ImagePickerWidget**
 
 `ImagePickerWidget` is a custom Django form widget designed to allow users to select images via a file picker interface in forms. It is typically used alongside the `ImagePickerField` in Django forms to enhance the image selection experience.
 
