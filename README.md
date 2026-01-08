@@ -1,294 +1,106 @@
-<h1 align="center" id="title">Django FileHub</h1>
+# Django FileHub
 
-<p align="center"><img src="https://socialify.git.ci/scthakuri/django-filehub/image?font=Inter&amp;forks=1&amp;issues=1&amp;language=1&amp;name=1&amp;owner=1&amp;pattern=Circuit%20Board&amp;pulls=1&amp;stargazers=1&amp;theme=Light" alt="project-image"></p>
+<p align="center"><img src="https://socialify.git.ci/scthakuri/django-filehub/image?font=Inter&forks=1&issues=1&language=1&name=1&owner=1&pattern=Circuit%20Board&pulls=1&stargazers=1&theme=Light" alt="django-filehub"></p>
 
-FileHub is a Django-based file management app that simplifies file handling within your Django projects. It supports file uploads, storage, and retrieval, making it easy to integrate robust file management features into your applications.
+<p align="center">
+  <a href="https://pypi.org/project/django-filehub/"><img src="https://img.shields.io/pypi/v/django-filehub.svg" alt="PyPI version"></a>
+  <a href="https://pypi.org/project/django-filehub/"><img src="https://img.shields.io/pypi/pyversions/django-filehub.svg" alt="Python versions"></a>
+  <a href="https://github.com/scthakuri/django-filehub/blob/main/LICENSE"><img src="https://img.shields.io/pypi/l/django-filehub.svg" alt="License"></a>
+</p>
+
+Django FileHub is a powerful file management application for Django projects. It provides a complete solution for handling file uploads, storage, organization, and retrieval with an intuitive web-based interface.
 
 ## Features
 
-- **File Uploads**: Seamlessly handle file uploads in your Django project.
-- **File Storage**: Organize and store files with customizable configurations.
-- **File Retrieval**: Efficiently access and manage uploaded files.
-- **File Categories**: Automatically categorize files based on type.
-- **Sorting Options**: Flexible sorting by name, size, or date, with ascending/descending order.
-- **Custom Fields**: Use `ImagePickerField` and `ImagePickerWidget` for advanced image selection in forms.
+- **📁 File Management**: Upload, organize, and manage files with an intuitive interface
+- **🖼️ Image Gallery**: Built-in image picker and gallery selector for forms
+- **📂 File Categories**: Automatic categorization based on file types (images, videos, documents, etc.)
+- **🔍 Smart Sorting**: Sort files by name, size, or date with ascending/descending options
+- **🎨 Customizable Theme**: Configure theme colors to match your project's design
+- **☁️ Cloud Storage**: Seamless integration with AWS S3 and other storage backends
+- **🔒 Access Control**: Built-in authentication and authorization
+- **📝 TinyMCE Integration**: Direct integration with TinyMCE editor
+- **🎯 Custom Form Fields**: Specialized form fields and widgets for file selection
 
 ## Installation
 
-1. Install django-filehub using [pip](https://pip.pypa.io/en/stable/) (or any other way to install python package) from [PyPI](https://pypi.org/).
+### Using pip
 
 ```bash
 pip install django-filehub
 ```
 
-2. Add `filehub` to INSTALLED_APPS in `settings.py` for your project:
+### Using uv
+
+```bash
+uv add django-filehub
+```
+
+### Using Poetry
+
+```bash
+poetry add django-filehub
+```
+
+### Using Pipenv
+
+```bash
+pipenv install django-filehub
+```
+
+## Quick Start
+
+### 1. Add to Installed Apps
+
+Add `filehub` to your `INSTALLED_APPS` in `settings.py`:
 
 ```python
-INSTALLED_APPS = (
-    ...
+INSTALLED_APPS = [
+    # ... other apps
     'filehub',
-    ...
-)
+    # ... other apps
+]
 ```
 
-3. Add `filehub.urls` to `urls.py` for your project:
+### 2. Configure URLs
+
+**Important**: Add FileHub URLs **before** the admin URLs in your project's `urls.py`:
 
 ```python
-urlpatterns = patterns('',
-    ...
-    path('admin/', include('filehub.urls')),
-    ...
-)
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    # FileHub URLs must come before admin
+    path('filehub/', include('filehub.urls')),
+    
+    # Admin URLs
+    path('admin/', admin.site.urls),
+    
+    # ... other URLs
+]
 ```
 
-4. Make migrations to add necessary database tables
+### 3. Run Migrations
 
 ```bash
 python manage.py migrate
 ```
 
-## Configuration
+### 4. Configure Media Files
 
-### 1. **Login URL for File Access Control**
-
-To secure file access, define a login URL that redirects unauthorized users to the login page:
+Add the following to your `settings.py`:
 
 ```python
-FILEHUB_LOGIN_URL = "/login/"
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 ```
 
-- Description:
-    - This URL will be used as a fallback for unauthorized access to media files.
-    - Users attempting to access restricted files will be redirected to this URL.
+### 5. Serve Media Files in Development
 
-### 2. **Media File Settings**
-
-Django requires `MEDIA_URL` and `MEDIA_ROOT` to manage uploaded files. Add the following settings:
+Add this to your main `urls.py` for development:
 
 ```python
-MEDIA_URL = "media/"
-MEDIA_ROOT = "path/to/media"
-```
-
-- MEDIA_URL:
-    - Specifies the base public URL to serve media files.
-    - Example: If `MEDIA_URL = "media/"`, uploaded files will be accessible at http://yourdomain.com/media/.
-
-- MEDIA_ROOT:
-    - Defines the absolute path to the directory where media files are stored.
-    - Replace `"path/to/media"` with the full path to your desired directory.
-
-
-### 3. **Upload Directory Configuration**
-
-Define the directory where files will be uploaded within the `MEDIA_ROOT` directory. By default, this is set to `uploads`, but you can change it as needed.
-
-```python
-DIRECTORY = "uploads"
-```
-
-- Description:
-    - This setting determines the subdirectory inside the `MEDIA_ROOT` where uploaded files will be stored.
-    - The default value is `"uploads"`, meaning that files will be uploaded to `MEDIA_ROOT/uploads/`.
-    - You can change this value to any directory name you prefer (e.g., `"files"`, `"documents"`, etc.).
-    - Ensure the specified directory exists within the `MEDIA_ROOT` or Django will create it when files are uploaded.
-
-### 4. **File Type Categories**
-
-Organize files into specific categories based on their extensions. Add the following dictionary to define supported file types:
-
-```python
-FILE_TYPE_CATEGORIES = {
-    'images': ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp'],
-    'videos': ['mp4', 'webm', 'ogg', 'avi', 'mkv', 'mov', 'wmv', '3gp', 'mpeg', 'mpg4'],
-    'musics': ['mp3', 'wav', 'flac', 'aac', 'wma', 'm4a'],
-    'archives': ['zip', 'rar', 'tar', 'gz']
-}
-```
-
-- Description:
-    - This dictionary categorizes files by type and extension for better organization.
-    - Each key represents a category (e.g., `images`, `videos`), and the value is a list of associated file extensions.
-
-### 5. **Theme Color Configuration**
-
-You can customize the theme color of the Filehub file manager interface by setting the `FILEHUB_THEME_COLOR`.
-
-```python
-FILEHUB_THEME_COLOR = "#3498db"
-```
-
-- Description:
-    - This setting allows you to change the theme color of the Filehub file manager interface.
-    - The color is specified using a Hex color code. You can set it to any valid Hex color (e.g., `#3498db` for blue, `#e74c3c` for red).
-    - This provides a way to customize the visual appearance of the file manager to better match your site's theme.
-
-## Custom Fields
-
-Django Filehub also supports the following custom field and widget for advanced image selection:
-
-### 1. **FilePickerField**
-
-`FilePickerField` is a custom Django model field used to store a selected file (with metadata) in JSON format. It provides support for file type categories (e.g., images, videos, archives) and file extension restrictions.
-
-#### Example Usage:
-
-```python
-from filehub.fields import FilePickerField
-
-class Document(models.Model):
-    file = FilePickerField(file_type=['images', 'archives'], file_ext=['pdf'])
-```
-
-* **Description**:
-
-  * Stores a single file (typically as a JSON object with metadata like name, size, type, etc.).
-  * Supports validation using `file_type` (mapped to categories like images, videos, etc.) and `file_ext`.
-  * Automatically warns if unsupported attributes like `max_length` are used.
-  * Ideal for selecting or linking externally uploaded files with validation logic.
-
----
-
-### 2. **GalleryPickerField**
-
-`GalleryPickerField` is a custom Django model field used to store a gallery of selected files (typically images) as a list of JSON objects.
-
-#### Example Usage:
-
-```python
-from filehub.fields import GalleryPickerField
-
-class Album(models.Model):
-    gallery = GalleryPickerField(min_items=2, max_items=5, sortable=True)
-```
-
-* **Description**:
-
-  * Stores multiple files (usually images) as a JSON array.
-  * Each entry in the array represents a file with metadata.
-  * Supports file type categories and file extension filtering similar to `FilePickerField`.
-  * Best suited for image galleries, multi-file selection, or grouped file displays.
-
-
-
-### 3. **ImagePickerField**
-
-`ImagePickerField` is a custom Django model field used to store image file paths as text. This field makes it easier to handle image selections by allowing you to store the image path in your model without the need for manually handling file uploads.
-
-#### Example Usage:
-
-```python
-from filehub.fields import ImagePickerField
-
-class ExampleModel(models.Model):
-    image = ImagePickerField()
-```
-
-- Description:
-    - The ImagePickerField stores the file path of the selected image in your model as a text field.
-    - It does not directly handle the image upload process; rather, it works with an image picker interface that allows the user to choose images.
-    - This is particularly useful when you want to allow users to select images from a pre-defined set or directory rather than uploading new images each time.
-
-### 4. **ImagePickerWidget**
-
-`ImagePickerWidget` is a custom Django form widget designed to allow users to select images via a file picker interface in forms. It is typically used alongside the `ImagePickerField` in Django forms to enhance the image selection experience.
-
-```python
-from filehub.widgets import ImagePickerWidget
-from django import forms
-
-class ExampleForm(forms.Form):
-    image = forms.CharField(widget=ImagePickerWidget())
-```
-
-- Description:
-    - The ImagePickerWidget is a custom form widget that renders a file picker interface in the form, allowing users to select an image.
-    - It works by rendering a text field where users can either enter an image path or use the widget’s file picker to select an image.
-    - This widget is designed to work with the ImagePickerField model field, which stores the image file path.
-
-
-## Additional Notes
-
-### Serving Media Files via AWS S3 Buckets
-
-To serve media files via AWS S3 in your Django project, you'll need to configure `django-storages` to handle the interaction with S3.
-
-#### 1. Install django-storages
-
-First, you need to install `django-storages` to manage media files with AWS S3:
-
-```bash
-pip install "django-storages[s3]"
-```
-
-#### 2. Configure AWS S3 in Django Settings
-
-In your `settings.py`, add the following configurations:
-
-```bash
-# AWS S3 Configuration for Serving Media Files
-AWS_ACCESS_KEY_ID = 'your-access-key-id'
-AWS_SECRET_ACCESS_KEY = 'your-secret-access-key'
-AWS_STORAGE_BUCKET_NAME = 'your-bucket-name'
-AWS_S3_REGION_NAME = 'your-region'  # e.g., 'us-east-1'
-AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"  # Customize if using CloudFront
-AWS_S3_FILE_OVERWRITE = False  # Prevent overwriting files with the same name
-AWS_DEFAULT_ACL = 'public-read'  # Files will be publicly accessible
-
-# Optionally, if you want to use a custom URL for your media files:
-AWS_S3_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'  # Adjust if using CloudFront
-```
-
-Make sure to replace placeholders like `'your-access-key-id'`, `'your-secret-access-key'`, and `'your-bucket-name'` with your actual AWS credentials and settings.
-
-#### 3. Set MEDIA_URL (Required) and STATIC_URL (Optional)
-
-Configure the URLs for both static and media files:
-
-```bash
-# URL for serving Media files
-MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
-
-# URL for serving Static files (Optional)
-STATIC_URL = f'https://{AWS_S3_STATIC_CUSTOM_DOMAIN}/static/'  # Optional
-```
-
-If you do not wish to use a custom `STATIC_URL` and prefer using the default Django static setup, you can skip setting `STATIC_URL`. This is optional.
-
-#### 4. Run collectstatic for Static Files
-
-To upload static files to your S3 bucket, run the following command:
-
-```bash
-python manage.py collectstatic
-```
-
-This command will gather all static files and push them to your S3 bucket under the static/ folder.
-
-For more configuration settings, [check AWS config here](https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html)
-
-#### 5. Filemanager in Tinymce Editor
-
-From v3.0.1, Filemanager can be easily integrate in tinymce editor.
-
-```python
-TINYMCE_DEFAULT_CONFIG = {
-    ...
-    plugins: [... filehub ....],
-    toolbar: [... filehub ....],
-    "external_filemanager_path": "/admin/fm/select/", # Path of your filemanager
-    "filemanager_title": "Filemanager",
-    "external_plugins": {
-        "filehub": "/static/filehub/tinymce/plugin.min.js",
-    },
-}
-```
-
-### Serving Media Files in Development
-
-During development, you can serve media files by adding the following to your `urls.py`:
-
-```bash
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -296,9 +108,495 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 ```
 
-### Serving Media Files in Production
+## Configuration
 
-In production, use a web server like **Nginx** or **Apache** to serve media files efficiently. Ensure the `MEDIA_ROOT` directory is properly configured.
+### Basic Settings
+
+#### Login URL
+
+Define the login URL for file access control:
+
+```python
+FILEHUB_LOGIN_URL = '/accounts/login/'
+```
+
+Default: `'/admin/'`
+
+This URL is used to redirect unauthorized users attempting to access restricted files.
+
+#### Upload Directory
+
+Specify the directory where files will be uploaded within `MEDIA_ROOT`:
+
+```python
+FILEMANAGER_DIRECTORY = 'uploads'
+```
+
+Default: `'uploads'`
+
+Files will be stored in `MEDIA_ROOT/uploads/`.
+
+#### Thumbnail Directory
+
+Configure the directory for storing image thumbnails:
+
+```python
+THUMB_DIRECTORY = 'thumbs'
+```
+
+Default: `'thumbs'`
+
+Thumbnails will be stored in `MEDIA_ROOT/thumbs/`.
+
+### File Type Categories
+
+Organize files by type using file extensions:
+
+```python
+FILE_TYPE_CATEGORIES = {
+    'images': ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp', 'svg', 'ico'],
+    'videos': ['mp4', 'webm', 'ogg', 'avi', 'mkv', 'mov', 'wmv', '3gp', 'mpeg', 'mpg4'],
+    'musics': ['mp3', 'wav', 'flac', 'aac', 'wma', 'm4a'],
+    'archives': ['zip', 'rar', 'tar', 'gz'],
+    'documents': ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv', 'odt', 'ods'],
+}
+```
+
+You can customize these categories or add new ones based on your needs.
+
+### Sorting Configuration
+
+Configure available sorting options:
+
+```python
+FILES_SORTING = {
+    "name": "Name",
+    "size": "Size",
+    "date": "Modified"
+}
+
+FILES_SORTING_ORDER = {
+    "asc": "Ascending",
+    "desc": "Descending"
+}
+```
+
+### Theme Customization
+
+Customize the FileHub interface color:
+
+```python
+FILEHUB_THEME_COLOR = '#009688'
+```
+
+Default: `'#009688'` (Teal)
+
+Use any valid hex color code (e.g., `'#3498db'` for blue, `'#e74c3c'` for red).
+
+### User Interface Settings
+
+#### Auto-Close Upload Modal
+
+Automatically close the upload modal after successful file upload:
+
+```python
+FILEHUB_AUTO_CLOSE_UPLOAD_MODAL = True
+```
+
+Default: `False`
+
+When set to `True`, the upload modal will automatically close after files are successfully uploaded.
+
+## Custom Form Fields
+
+Django FileHub provides specialized form fields for file selection in your models.
+
+### FilePickerField
+
+Store a single file with metadata in JSON format:
+
+```python
+from django.db import models
+from filehub.fields import FilePickerField
+
+class Document(models.Model):
+    title = models.CharField(max_length=200)
+    file = FilePickerField(
+        file_type=['images', 'documents'],
+        file_ext=['pdf', 'docx']
+    )
+```
+
+**Parameters:**
+- `file_type`: List of allowed file type categories (e.g., `['images', 'videos']`)
+- `file_ext`: List of allowed file extensions (e.g., `['pdf', 'jpg']`)
+
+### GalleryPickerField
+
+Store multiple files as a JSON array:
+
+```python
+from django.db import models
+from filehub.fields import GalleryPickerField
+
+class Album(models.Model):
+    title = models.CharField(max_length=200)
+    gallery = GalleryPickerField(
+        min_items=2,
+        max_items=10,
+        sortable=True
+    )
+```
+
+**Parameters:**
+- `min_items`: Minimum number of files required
+- `max_items`: Maximum number of files allowed
+- `sortable`: Enable drag-and-drop sorting of files
+
+### ImagePickerField
+
+Store image file paths as text:
+
+```python
+from django.db import models
+from filehub.fields import ImagePickerField
+
+class Profile(models.Model):
+    name = models.CharField(max_length=100)
+    avatar = ImagePickerField()
+```
+
+This field stores the file path of the selected image and works seamlessly with the image picker interface.
+
+### ImagePickerWidget
+
+Use in Django forms for image selection:
+
+```python
+from django import forms
+from filehub.widgets import ImagePickerWidget
+
+class ProfileForm(forms.Form):
+    avatar = forms.CharField(widget=ImagePickerWidget())
+```
+
+The widget renders an interactive file picker interface in your forms.
+
+## Cloud Storage Integration
+
+### AWS S3 Configuration
+
+Django FileHub works seamlessly with AWS S3 for cloud file storage.
+
+#### 1. Install django-storages
+
+```bash
+pip install "django-storages[s3]"
+```
+
+Or with uv:
+
+```bash
+uv add "django-storages[s3]"
+```
+
+#### 2. Configure AWS S3 Settings
+
+Add to your `settings.py`:
+
+```python
+# AWS S3 Configuration
+AWS_ACCESS_KEY_ID = 'your-access-key-id'
+AWS_SECRET_ACCESS_KEY = 'your-secret-access-key'
+AWS_STORAGE_BUCKET_NAME = 'your-bucket-name'
+AWS_S3_REGION_NAME = 'us-east-1'  # Your AWS region
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+
+# File handling
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = 'public-read'
+
+# Media files URL
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
+```
+
+**Security Note**: Never commit AWS credentials to version control. Use environment variables:
+
+```python
+import os
+
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+```
+
+#### 3. Configure Storage Backends
+
+```python
+# Default file storage
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+# Static files (optional)
+STATICFILES_STORAGE = 'storages.backends.s3boto3.S3StaticStorage'
+```
+
+#### 4. Collect Static Files
+
+```bash
+python manage.py collectstatic
+```
+
+For more configuration options, see [django-storages documentation](https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html).
+
+## TinyMCE Editor Integration
+
+Integrate FileHub with TinyMCE editor for rich content editing with file management.
+
+### Configuration
+
+Add to your `settings.py`:
+
+```python
+TINYMCE_DEFAULT_CONFIG = {
+    'plugins': [
+        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap',
+        'preview', 'anchor', 'searchreplace', 'visualblocks', 'code',
+        'fullscreen', 'insertdatetime', 'media', 'table', 'help',
+        'wordcount', 'filehub'  # Add filehub plugin
+    ],
+    'toolbar': (
+        'undo redo | blocks | bold italic backcolor | '
+        'alignleft aligncenter alignright alignjustify | '
+        'bullist numlist outdent indent | removeformat | '
+        'filehub | help'  # Add filehub button
+    ),
+    'external_filemanager_path': '/filehub/select/',
+    'filemanager_title': 'File Manager',
+    'external_plugins': {
+        'filehub': '/static/filehub/tinymce/plugin.min.js',
+    },
+}
+```
+
+This enables the FileHub button in your TinyMCE toolbar, allowing users to select and insert files directly from the file manager.
+
+## Production Deployment
+
+### Serving Media Files with Nginx
+
+Configure Nginx to serve media files:
+
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com;
+
+    location /media/ {
+        alias /path/to/your/media/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+### Serving Media Files with Apache
+
+Configure Apache with mod_wsgi:
+
+```apache
+<VirtualHost *:80>
+    ServerName yourdomain.com
+    
+    Alias /media/ /path/to/your/media/
+    <Directory /path/to/your/media/>
+        Require all granted
+    </Directory>
+    
+    WSGIDaemonProcess yourproject python-path=/path/to/your/project
+    WSGIProcessGroup yourproject
+    WSGIScriptAlias / /path/to/your/project/wsgi.py
+</VirtualHost>
+```
+
+## Advanced Configuration
+
+### Complete Settings Reference
+
+Here's a complete reference of all available settings:
+
+```python
+# Login and authentication
+FILEHUB_LOGIN_URL = '/accounts/login/'
+
+# File storage
+FILEMANAGER_DIRECTORY = 'uploads'
+THUMB_DIRECTORY = 'thumbs'
+
+# File type categories
+FILE_TYPE_CATEGORIES = {
+    'images': ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp', 'svg', 'ico'],
+    'videos': ['mp4', 'webm', 'ogg', 'avi', 'mkv', 'mov', 'wmv', '3gp', 'mpeg', 'mpg4'],
+    'musics': ['mp3', 'wav', 'flac', 'aac', 'wma', 'm4a'],
+    'archives': ['zip', 'rar', 'tar', 'gz'],
+    'documents': ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv', 'odt', 'ods'],
+}
+
+# Sorting options
+FILES_SORTING = {
+    "name": "Name",
+    "size": "Size",
+    "date": "Modified"
+}
+
+FILES_SORTING_ORDER = {
+    "asc": "Ascending",
+    "desc": "Descending"
+}
+
+# Theme customization
+FILEHUB_THEME_COLOR = '#009688'
+
+# UI behavior
+FILEHUB_AUTO_CLOSE_UPLOAD_MODAL = False
+```
+
+## Usage Examples
+
+### In Django Admin
+
+```python
+from django.contrib import admin
+from django.db import models
+from filehub.fields import ImagePickerField, GalleryPickerField
+from filehub.widgets import ImagePickerWidget
+
+class Article(models.Model):
+    title = models.CharField(max_length=200)
+    cover_image = ImagePickerField()
+    gallery = GalleryPickerField(max_items=5)
+
+class ArticleAdmin(admin.ModelAdmin):
+    formfield_overrides = {
+        ImagePickerField: {'widget': ImagePickerWidget},
+    }
+
+admin.site.register(Article, ArticleAdmin)
+```
+
+### In Django Forms
+
+```python
+from django import forms
+from filehub.widgets import ImagePickerWidget
+
+class ArticleForm(forms.ModelForm):
+    cover_image = forms.CharField(
+        widget=ImagePickerWidget(),
+        label='Cover Image'
+    )
+    
+    class Meta:
+        model = Article
+        fields = ['title', 'cover_image']
+```
+
+### In Templates
+
+Access uploaded files in your templates:
+
+```html
+{% load static %}
+
+<div class="article">
+    <h1>{{ article.title }}</h1>
+    
+    {% if article.cover_image %}
+        <img src="{{ article.cover_image }}" alt="{{ article.title }}">
+    {% endif %}
+    
+    {% if article.gallery %}
+        <div class="gallery">
+            {% for image in article.gallery %}
+                <img src="{{ image.url }}" alt="{{ image.name }}">
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+```
+
+## Troubleshooting
+
+### Media Files Not Loading
+
+Ensure your media settings are correct:
+
+1. Check `MEDIA_URL` and `MEDIA_ROOT` in settings
+2. Verify URL patterns include media serving in development
+3. Check file permissions on the media directory
+4. Ensure the upload directory exists
+
+### Upload Failures
+
+Common causes and solutions:
+
+1. **File size limits**: Check `FILE_UPLOAD_MAX_MEMORY_SIZE` in Django settings
+2. **Permissions**: Ensure the web server has write permissions to `MEDIA_ROOT`
+3. **Storage backend**: Verify AWS S3 credentials if using cloud storage
+
+### TinyMCE Integration Issues
+
+1. Ensure the FileHub static files are collected: `python manage.py collectstatic`
+2. Verify the plugin path in `TINYMCE_DEFAULT_CONFIG`
+3. Check browser console for JavaScript errors
 
 ## Contributing
-Contributions are welcome! If you'd like to report issues, suggest new features, or contribute to the development, please submit a pull request or open an issue.
+
+Contributions are welcome! Here's how you can help:
+
+1. **Report Bugs**: Open an issue with details and reproduction steps
+2. **Suggest Features**: Share your ideas for new features
+3. **Submit Pull Requests**: Fix bugs or implement new features
+4. **Improve Documentation**: Help make the docs better
+
+### Development Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/scthakuri/django-filehub.git
+cd django-filehub
+
+# Install dependencies
+pip install -e ".[dev]"
+
+# Run tests
+python manage.py test
+```
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Support
+
+- **Documentation**: [GitHub Repository](https://github.com/scthakuri/django-filehub)
+- **Issues**: [GitHub Issues](https://github.com/scthakuri/django-filehub/issues)
+- **PyPI**: [django-filehub](https://pypi.org/project/django-filehub/)
+
+## Changelog
+
+### Version 3.2.0
+- Added thumbnail directory configuration
+- Enhanced file type categories with documents support
+- Improved sorting options
+- Added auto-close upload modal option
+- Bug fixes and performance improvements
+
+---
+
+Made with ❤️ by [scthakuri](https://github.com/scthakuri)

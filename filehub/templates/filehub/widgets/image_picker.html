@@ -6,20 +6,14 @@
 
     {% if value %}
         {% if is_image %}
-            <div class="image_fill_placeholder mt-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512">
-                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                          stroke-width="32" d="M368 368L144 144M368 144L144 368"></path>
-                </svg>
+            <div class="image_fill_placeholder image mt-2">
+                <span class="hgi hgi-stroke hgi-cancel-01"></span>
                 <img src="{{ value }}" style="width:auto;max-width:100%;" alt="Preview File"/>
             </div>
         {% else %}
             <div class="image_fill_placeholder mt-2"
                  style="border: 2px solid #eeeeee;border-radius: 10px;padding: 10px;">
-                <svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512">
-                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                          stroke-width="32" d="M368 368L144 144M368 144L144 368"></path>
-                </svg>
+                <span class="hgi hgi-stroke hgi-cancel-01"></span>
 
                 <div class="file_card" style="display: flex;align-items: center;gap: 10px;">
                     <img style="width:50px;"

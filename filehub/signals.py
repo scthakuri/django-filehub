@@ -13,7 +13,6 @@ def delete_media_file(sender, instance, **kwargs):
     try:
         FolderManager.delete_file(instance)
 
-        # Delete thumbnail
         basename, file_extension = os.path.splitext(instance.file_name)
         thumbnail_url = os.path.join(settings.MEDIA_ROOT, "thumbs", f"{instance.id}{file_extension}")
         if os.path.exists(thumbnail_url):

@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.contrib.admin import widgets as admin_widgets
 from django.conf import settings
-from filehub.settings import FILEMANAGER_DEBUG, FILE_TYPE_CATEGORIES
+from filehub.settings import FILE_TYPE_CATEGORIES
 
 
 def get_file_size(value):
@@ -89,14 +89,12 @@ class ImagePickerWidget(forms.Textarea):
         css = {
             "all": [
                 "https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css",
-                f"{settings.STATIC_URL}filehub/widget.css" if FILEMANAGER_DEBUG else
-                f"{settings.STATIC_URL}filehub/widget.min.css"
+                f"{settings.STATIC_URL}filehub/widget.css"
             ]
         }
         js = [
             "https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js",
-            f"{settings.STATIC_URL}filehub/widget.js" if FILEMANAGER_DEBUG else
-            f"{settings.STATIC_URL}filehub/widget.min.js"
+            f"{settings.STATIC_URL}filehub/widget.js"
         ]
 
 
@@ -125,15 +123,13 @@ class BaseFilePickerWidget(forms.Widget):
             'all': [
                 "https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css",
                 "https://use.hugeicons.com/font/icons.css",
-                f"{settings.STATIC_URL}filehub/widget.css" if FILEMANAGER_DEBUG else
-                f"{settings.STATIC_URL}filehub/widget.min.css"
+                f"{settings.STATIC_URL}filehub/widget.css"
             ]
         }
         js = [
             "https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js",
             "https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.6/Sortable.min.js",
-            f"{settings.STATIC_URL}filehub/widget.js" if FILEMANAGER_DEBUG else
-            f"{settings.STATIC_URL}filehub/widget.min.js"
+            f"{settings.STATIC_URL}filehub/widget.js"
         ]
 
     def __init__(self, attrs=None):
