@@ -73,10 +73,10 @@ from django.urls import path, include
 urlpatterns = [
     # FileHub URLs must come before admin
     path('filehub/', include('filehub.urls')),
-    
+
     # Admin URLs
     path('admin/', admin.site.urls),
-    
+
     # ... other URLs
 ]
 ```
@@ -228,6 +228,7 @@ class Document(models.Model):
 ```
 
 **Parameters:**
+
 - `file_type`: List of allowed file type categories (e.g., `['images', 'videos']`)
 - `file_ext`: List of allowed file extensions (e.g., `['pdf', 'jpg']`)
 
@@ -249,6 +250,7 @@ class Album(models.Model):
 ```
 
 **Parameters:**
+
 - `min_items`: Minimum number of files required
 - `max_items`: Maximum number of files allowed
 - `sortable`: Enable drag-and-drop sorting of files
@@ -412,12 +414,12 @@ Configure Apache with mod_wsgi:
 ```apache
 <VirtualHost *:80>
     ServerName yourdomain.com
-    
+
     Alias /media/ /path/to/your/media/
     <Directory /path/to/your/media/>
         Require all granted
     </Directory>
-    
+
     WSGIDaemonProcess yourproject python-path=/path/to/your/project
     WSGIProcessGroup yourproject
     WSGIScriptAlias / /path/to/your/project/wsgi.py
@@ -500,7 +502,7 @@ class ArticleForm(forms.ModelForm):
         widget=ImagePickerWidget(),
         label='Cover Image'
     )
-    
+
     class Meta:
         model = Article
         fields = ['title', 'cover_image']
@@ -514,19 +516,17 @@ Access uploaded files in your templates:
 {% load static %}
 
 <div class="article">
-    <h1>{{ article.title }}</h1>
-    
-    {% if article.cover_image %}
-        <img src="{{ article.cover_image }}" alt="{{ article.title }}">
-    {% endif %}
-    
-    {% if article.gallery %}
-        <div class="gallery">
-            {% for image in article.gallery %}
-                <img src="{{ image.url }}" alt="{{ image.name }}">
-            {% endfor %}
-        </div>
-    {% endif %}
+  <h1>{{ article.title }}</h1>
+
+  {% if article.cover_image %}
+  <img src="{{ article.cover_image }}" alt="{{ article.title }}" />
+  {% endif %} {% if article.gallery %}
+  <div class="gallery">
+    {% for image in article.gallery %}
+    <img src="{{ image.url }}" alt="{{ image.name }}" />
+    {% endfor %}
+  </div>
+  {% endif %}
 </div>
 ```
 
@@ -591,6 +591,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## Changelog
 
 ### Version 3.2.0
+
 - Added thumbnail directory configuration
 - Enhanced file type categories with documents support
 - Improved sorting options

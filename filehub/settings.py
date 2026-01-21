@@ -1,7 +1,7 @@
 import os
 from django.conf import settings
 
-FILEMANAGER_VERSION = "3.2.0"
+FILEMANAGER_VERSION = "3.2.1"
 
 FILEHUB_LOGIN_URL = getattr(settings, 'FILEHUB_LOGIN_URL', '/admin/')
 
