@@ -7,17 +7,17 @@ class FilehubConfig(AppConfig):
 
     def ready(self):
         import filehub.signals
-        try:
-            from rest_framework import serializers
-            from filehub.fields import FilePickerField, GalleryPickerField, ImagePickerField
-            from filehub.serializers import (
-                FilePickerSerializerField,
-                GalleryPickerSerializerField,
-                ImagePickerSerializerField
-            )
+        print("DEBUG: FilehubConfig.ready() executed - registering DRF mappings")
+        
+        from rest_framework.serializers import ModelSerializer
+        from filehub.fields import FilePickerField, GalleryPickerField, ImagePickerField
+        from filehub.serializers import (
+            FilePickerSerializerField,
+            GalleryPickerSerializerField,
+            ImagePickerSerializerField
+        )
 
-            serializers.ModelSerializer.serializer_field_mapping[FilePickerField] = FilePickerSerializerField
-            serializers.ModelSerializer.serializer_field_mapping[GalleryPickerField] = GalleryPickerSerializerField
-            serializers.ModelSerializer.serializer_field_mapping[ImagePickerField] = ImagePickerSerializerField
-        except ImportError:
-            pass
+        # Register custom field mappings
+        ModelSerializer.serializer_field_mapping[FilePickerField] = FilePickerSerializerField
+        ModelSerializer.serializer_field_mapping[GalleryPickerField] = GalleryPickerSerializerField
+        ModelSerializer.serializer_field_mapping[ImagePickerField] = ImagePickerSerializerField

@@ -1,13 +1,16 @@
 from rest_framework import serializers
 from django.core.files.uploadedfile import UploadedFile
 from filehub.core import FolderManager
+import os
 
 
-class FilePickerSerializerField(serializers.JSONField):
+class FilePickerSerializerField(serializers.Field):
 
     def __init__(self, *args, **kwargs):
         self.upload_to = kwargs.pop('upload_to', None)
         self.file_ext = kwargs.pop('file_ext', [])
+        kwargs.pop('encoder', None)
+        kwargs.pop('decoder', None)
         super().__init__(*args, **kwargs)
 
     def bind(self, field_name, parent):
@@ -25,10 +28,21 @@ class FilePickerSerializerField(serializers.JSONField):
                 pass
 
     def to_internal_value(self, data):
+        if data is None or data == '':
+            return None
+
         if isinstance(data, UploadedFile):
             folder_instance = None
             if self.upload_to:
-                folder_instance = FolderManager.create_folder_by_path(self.upload_to)
+                upload_path = self.upload_to
+                if callable(upload_path):
+                    instance = getattr(self.parent, 'instance', None)
+                    upload_path = upload_path(instance, data.name)
+                    if upload_path and not upload_path.endswith('/'):
+                        upload_path = os.path.dirname(upload_path)
+
+                if upload_path:
+                    folder_instance = FolderManager.create_folder_by_path(upload_path)
 
             media_file = FolderManager.upload_to_filemanager(
                 data,
@@ -48,7 +62,17 @@ class FilePickerSerializerField(serializers.JSONField):
             if data.startswith('http'):
                 folder_instance = None
                 if self.upload_to:
-                    folder_instance = FolderManager.create_folder_by_path(self.upload_to)
+                    upload_path = self.upload_to
+                    if callable(upload_path):
+                        instance = getattr(self.parent, 'instance', None)
+                        # For URLs, we might not have a clean filename easily, but we try base name
+                        filename = os.path.basename(data.split('?')[0])
+                        upload_path = upload_path(instance, filename)
+                        if upload_path and not upload_path.endswith('/'):
+                            upload_path = os.path.dirname(upload_path)
+
+                    if upload_path:
+                        folder_instance = FolderManager.create_folder_by_path(upload_path)
 
                 media_file = FolderManager.upload_to_filemanager(
                     data,
@@ -64,12 +88,12 @@ class FilePickerSerializerField(serializers.JSONField):
                     'id': media_file.id
                 }
             else:
-                return super().to_internal_value(data)
+                return data
 
         elif isinstance(data, dict):
             return data
 
-        return {}
+        return None
 
     def to_representation(self, value):
         if not value:
@@ -102,13 +126,25 @@ class GalleryPickerSerializerField(serializers.JSONField):
                 pass
 
     def to_internal_value(self, data):
+        if not data:
+            return []
+            
         if not isinstance(data, list):
             data = [data]
 
         result = []
         folder_instance = None
         if self.upload_to:
-            folder_instance = FolderManager.create_folder_by_path(self.upload_to)
+            upload_path = self.upload_to
+            if callable(upload_path):
+                # For basic gallery, we pass filename=None to get the directory
+                instance = getattr(self.parent, 'instance', None)
+                upload_path = upload_path(instance, None)
+                if upload_path and not upload_path.endswith('/'):
+                    upload_path = os.path.dirname(upload_path)
+            
+            if upload_path:
+                folder_instance = FolderManager.create_folder_by_path(upload_path)
 
         for item in data:
             if isinstance(item, UploadedFile):
@@ -146,7 +182,7 @@ class GalleryPickerSerializerField(serializers.JSONField):
                         import json
                         parsed = json.loads(item)
                         result.append(parsed)
-                    except json.JSONDecodeError:
+                    except (json.JSONDecodeError, TypeError):
                         pass
 
             elif isinstance(item, dict):
@@ -188,10 +224,21 @@ class ImagePickerSerializerField(serializers.CharField):
                 pass
 
     def to_internal_value(self, data):
+        if data is None or data == '':
+            return ""
+
         if isinstance(data, UploadedFile):
             folder_instance = None
             if self.upload_to:
-                folder_instance = FolderManager.create_folder_by_path(self.upload_to)
+                upload_path = self.upload_to
+                if callable(upload_path):
+                    instance = getattr(self.parent, 'instance', None)
+                    upload_path = upload_path(instance, data.name)
+                    if upload_path and not upload_path.endswith('/'):
+                        upload_path = os.path.dirname(upload_path)
+
+                if upload_path:
+                    folder_instance = FolderManager.create_folder_by_path(upload_path)
 
             media_file = FolderManager.upload_to_filemanager(
                 data,
@@ -205,7 +252,16 @@ class ImagePickerSerializerField(serializers.CharField):
             if data.startswith('http'):
                 folder_instance = None
                 if self.upload_to:
-                    folder_instance = FolderManager.create_folder_by_path(self.upload_to)
+                    upload_path = self.upload_to
+                    if callable(upload_path):
+                        instance = getattr(self.parent, 'instance', None)
+                        filename = os.path.basename(data.split('?')[0])
+                        upload_path = upload_path(instance, filename)
+                        if upload_path and not upload_path.endswith('/'):
+                            upload_path = os.path.dirname(upload_path)
+
+                    if upload_path:
+                        folder_instance = FolderManager.create_folder_by_path(upload_path)
 
                 media_file = FolderManager.upload_to_filemanager(
                     data,

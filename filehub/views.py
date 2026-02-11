@@ -187,7 +187,7 @@ def browser_ajax(request):
         })
 
     except (ValueError, TypeError) as e:
-        return JsonResponse({"success": False, "message": str(e)}, status=400)
+        return JsonResponse({"success": False, "message": str(e), "error": e}, status=400)
     except Exception as e:
         return JsonResponse({"success": False, "message": "Internal server error", "error": str(e)}, status=500)
 

@@ -140,6 +140,13 @@ class MediaFile(models.Model):
 
         return files
 
+    def get_url(self):
+        """
+        Returns the publicly accessible URL for the file.
+        Uses get_full_path() which constructs the URL based on MEDIA_URL.
+        """
+        return self.get_full_path()
+
     def get_relative_path(self) -> str:
         if self.folder is None:
             return FolderManager.get_root_directory() + self.file_name
